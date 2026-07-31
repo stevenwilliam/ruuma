@@ -352,6 +352,19 @@ curl -s -X POST http://127.0.0.1:3000/api/sessions \
 curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/sessions; echo
 ```
 
+> **`status: FAILED` with `"QR refs attempts ended"` in the logs** just means the
+> QR wasn't scanned in time (NOWEB shows it ~20s, then gives up). Restart and
+> re-link — the pairing-code method avoids the timing race entirely:
+> ```bash
+> curl -s -X POST -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/sessions/default/restart; echo
+> sleep 5
+> curl -s -X POST http://127.0.0.1:3000/api/default/auth/request-code \
+>   -H "Content-Type: application/json" -H "X-Api-Key: $KEY" \
+>   -d '{"phoneNumber":"<LINKING_NUMBER_E164>"}'; echo
+> ```
+> Enter the returned code on the phone: WhatsApp → Linked devices → Link a device
+> → "Link with phone number instead". Then wait for `status: WORKING`.
+
 > If the dashboard shows **"Server connection failed / set right API key"**, open
 > its **Configuration** (gear icon) and set URL `http://localhost:3000` and the
 > **API Key** = your pinned `WAHA_API_KEY`. The dashboard stores this in the
