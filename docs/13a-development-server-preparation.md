@@ -332,6 +332,14 @@ ssh -L 3000:127.0.0.1:3000 dev@<CLAUDEDEV_IP>
 # and scan the QR with WhatsApp on the dev phone.
 ```
 
+> If the dashboard shows **"Server connection failed / set right API key"**, open
+> its **Configuration** (gear icon) and set URL `http://localhost:3000` and the
+> **API Key** = your pinned `WAHA_API_KEY`. The dashboard stores this in the
+> browser and can't reach the API without it, even after you log in. Verify the
+> key from the server with:
+> `curl -s -o /dev/null -w "%{http_code}\n" -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/sessions`
+> (expect `200`).
+
 ### A13.3 Config + the `dev-notify` helper (as root)
 
 ```bash
