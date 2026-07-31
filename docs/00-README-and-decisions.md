@@ -50,7 +50,8 @@ in the affected docs the same day.
 | D4 | 2026-07-31 | Conventions: search box on every list; configurable values in `sys_parameters` + CRUD; docs updated with every change; OS guides use full absolute paths. | Steven's standing preferences. | CLAUDE.md, 02, 03, 05, 10 |
 | D5 | 2026-07-31 | Delivery workflow = prep→confirm → docs A–Z → build all modules one shot → test/harden one shot → deployment handbook + user/admin guides. | Steven's process. | CLAUDE.md §9, 08 |
 | D6 | 2026-07-31 | Dev server is **shared across many projects**, hostname **`claudedev`**. `13a` restructured into Part A (server once) + Part B (onboard a project); ruuma is the worked example. Shared config under `/etc/claudedev/`, per-project under `/etc/<project>/`, projects at `/home/dev/projects/<project>`, nginx reverse proxy fronts project ports. | Steven's directive. | 13a |
-| D7 | — | _TODO: what ruuma actually is (domain)._ | | |
+| D7 | 2026-07-31 | WhatsApp notify/ChatOps uses **WAHA (Core, self-hosted, free)** on `claudedev` (own number via QR), not Meta Cloud API. `dev-notify` POSTs to WAHA on localhost:3000. Meta Cloud API kept as the documented official alternative for customer-facing messaging. | Free + stable for dev; official API reserved for production. | 13a |
+| D8 | — | _TODO: what ruuma actually is (domain)._ | | |
 
 ---
 

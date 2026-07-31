@@ -274,39 +274,75 @@ mkdir -p /etc/nginx/sites-available /etc/nginx/sites-enabled
 systemctl enable --now nginx
 ```
 
-## A13. Shared WhatsApp notify (as root)
+## A13. Shared WhatsApp notify via WAHA (as root)
 
-One notify helper for all projects and all CI runners. Secrets are server-wide;
-each message is tagged with its project.
+Notifications use **WAHA (WhatsApp HTTP API, Core edition)** — free, self-hosted,
+and driven by your **own** WhatsApp number (scan a QR once, like WhatsApp Web).
+One WAHA container serves every project and CI runner; the shared `dev-notify`
+helper just POSTs to it over localhost.
+
+> ⚠️ WAHA is an **unofficial** gateway (it automates WhatsApp Web). Use a
+> **secondary / dev WhatsApp number**, not your primary personal one, and keep
+> volume low. For customer-facing production messaging use the official Meta
+> Cloud API instead (see A13.4).
+
+### A13.1 Install Docker (as root)
+
+```bash
+# (as root)
+curl -fsSL https://get.docker.com | sh
+systemctl enable --now docker
+usermod -aG docker dev        # let dev run docker without sudo (re-login to apply)
+```
+
+### A13.2 Run WAHA and link your number (as root, then tunnel from laptop)
+
+```bash
+# (as root) — bind to localhost only; nothing WhatsApp is exposed publicly
+docker run -d --name waha --restart unless-stopped \
+  -p 127.0.0.1:3000:3000 \
+  devlikeapro/waha
+```
+
+Link the dev WhatsApp number by scanning a QR:
+
+```bash
+# (on your LAPTOP) — tunnel the dashboard to your machine
+ssh -L 3000:127.0.0.1:3000 dev@<CLAUDEDEV_IP>
+# then browse to http://localhost:3000, Start the "default" session,
+# and scan the QR with WhatsApp on the dev phone.
+```
+
+### A13.3 Config + the `dev-notify` helper (as root)
 
 ```bash
 # (as root)
 mkdir -p /etc/claudedev
 cat >/etc/claudedev/whatsapp.env <<'EOF'
-# Meta WhatsApp Cloud API — https://developers.facebook.com/ (WhatsApp product)
-WHATSAPP_TOKEN=<META_PERMANENT_TOKEN>
-WHATSAPP_PHONE_ID=<WHATSAPP_BUSINESS_PHONE_NUMBER_ID>
-WHATSAPP_TO=<YOUR_DESTINATION_NUMBER_E164>     # e.g. 6281234567890
-WHATSAPP_VERIFY_TOKEN=<PICK_A_RANDOM_STRING>    # inbound webhook verification
+WAHA_URL=http://127.0.0.1:3000
+WAHA_SESSION=default
+WHATSAPP_TO=628176315568
 EOF
 chmod 0640 /etc/claudedev/whatsapp.env
 chown root:dev /etc/claudedev/whatsapp.env
 
 cat >/usr/local/bin/dev-notify <<'EOF'
 #!/usr/bin/env bash
-# Usage: dev-notify "<message>"    (prefix the message with [project] yourself)
+# Usage: dev-notify "<message>"   (prefix the message with [project] yourself)
 set -euo pipefail
 set -a; source /etc/claudedev/whatsapp.env; set +a
 MSG="${*:-claudedev notification}"
-curl -fsS -X POST \
-  "https://graph.facebook.com/v20.0/${WHATSAPP_PHONE_ID}/messages" \
-  -H "Authorization: Bearer ${WHATSAPP_TOKEN}" \
+curl -fsS -X POST "${WAHA_URL}/api/sendText" \
   -H "Content-Type: application/json" \
-  -d "$(jq -n --arg to "$WHATSAPP_TO" --arg body "$MSG" \
-        '{messaging_product:"whatsapp", to:$to, type:"text", text:{body:$body}}')"
+  -d "$(jq -n --arg s "$WAHA_SESSION" --arg to "${WHATSAPP_TO}@c.us" --arg body "$MSG" \
+        '{session:$s, chatId:$to, text:$body}')"
 EOF
 chmod 0755 /usr/local/bin/dev-notify
 ```
+
+> Note: WAHA addresses a personal number as `<number>@c.us` (the helper appends
+> it). No API token / phone-ID / message templates are needed — that's the
+> whole point of WAHA over the Meta API.
 
 Test:
 
@@ -315,9 +351,21 @@ Test:
 /usr/local/bin/dev-notify "[claudedev] server is up 🚀"
 ```
 
-> Two-way ChatOps: each project exposes an inbound webhook (e.g.
-> `https://<project>.<claudedev-domain>/api/v1/webhooks/whatsapp`) verified with
-> `WHATSAPP_VERIFY_TOKEN`. The inbound handler is a per-project code task.
+### A13.4 Two-way ChatOps (optional)
+
+Point WAHA's webhook at a project endpoint so inbound messages reach your app:
+run WAHA with `-e WHATSAPP_HOOK_URL=http://127.0.0.1:8080/api/v1/webhooks/whatsapp`
+(and `-e WHATSAPP_HOOK_EVENTS=message`). The inbound handler is a per-project
+code task.
+
+### A13.5 Official alternative (production / customer messaging)
+
+For customer-facing messaging, use the **Meta WhatsApp Cloud API** instead of
+WAHA — it can't get your number banned and won't break on WhatsApp updates.
+Set `WHATSAPP_TOKEN` / `WHATSAPP_PHONE_ID` in the env and POST to
+`https://graph.facebook.com/v20.0/<PHONE_ID>/messages` (Bearer token,
+`messaging_product:"whatsapp"`). Requires a verified business number and
+approved message templates for business-initiated sends.
 
 ## A14. Projects root (as dev)
 
@@ -475,6 +523,7 @@ sudo whoami                                                  # NOPASSWD sudo
 ssh -T git@github.com || true                                # git SSH auth
 sudo systemctl status postgresql --no-pager                  # PG running
 sudo systemctl status nginx --no-pager                       # proxy running
+docker ps --filter name=waha                                 # WAHA container up
 /usr/local/bin/dev-notify "[claudedev] checklist complete ✅"
 echo "EDITOR=$EDITOR"                                        # should be vi
 hostnamectl | grep -i hostname                               # claudedev
