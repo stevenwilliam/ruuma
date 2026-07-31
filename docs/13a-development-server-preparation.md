@@ -308,8 +308,15 @@ docker run -d --name waha --restart unless-stopped \
   -e WAHA_DASHBOARD_USERNAME=admin \
   -e WAHA_DASHBOARD_PASSWORD=change-me \
   -e WAHA_API_KEY="$API_KEY" \
+  -e WHATSAPP_DEFAULT_ENGINE=NOWEB \
   devlikeapro/waha
 ```
+
+> **Use the `NOWEB` engine on a server.** WAHA's default `WEBJS` engine drives a
+> headless Chromium, which is heavy and crashes on low-RAM boxes (symptom:
+> `500 ... Page.captureScreenshot: Session closed`). `NOWEB` talks the WhatsApp
+> protocol directly — no browser — so it's lighter and far more stable for
+> notifications. Set `WHATSAPP_DEFAULT_ENGINE=NOWEB` as above.
 
 > **Three separate logins on port 3000 — don't confuse them:**
 > - **Dashboard** (the web UI you open) → `WAHA_DASHBOARD_USERNAME` /
@@ -330,6 +337,19 @@ Link the dev WhatsApp number by scanning a QR:
 ssh -L 3000:127.0.0.1:3000 dev@<CLAUDEDEV_IP>
 # then browse to http://localhost:3000, Start the "default" session,
 # and scan the QR with WhatsApp on the dev phone.
+```
+
+Create a session named **exactly `default`** (so it matches `WAHA_SESSION` in
+`dev-notify` — a mismatched name is a common cause of `422` on send):
+
+```bash
+# (as root)
+KEY=<YOUR_WAHA_API_KEY>
+curl -s -X POST http://127.0.0.1:3000/api/sessions \
+  -H "Content-Type: application/json" -H "X-Api-Key: $KEY" \
+  -d '{"name":"default","start":true}'; echo
+# verify: status should progress to WORKING after you scan the QR
+curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/sessions; echo
 ```
 
 > If the dashboard shows **"Server connection failed / set right API key"**, open
