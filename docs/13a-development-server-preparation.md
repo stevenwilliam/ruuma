@@ -446,6 +446,61 @@ approved message templates for business-initiated sends.
 mkdir -p /home/dev/projects
 ```
 
+## A15. Install Claude Code (as dev)
+
+Runs as the `dev` user — **never root**. The native installer bundles its own
+runtime (no Node.js needed).
+
+```bash
+# (as dev)
+curl -fsSL https://claude.ai/install.sh | bash
+# installs to /home/dev/.local/share/claude and symlinks /home/dev/.local/bin/claude
+
+# ensure /home/dev/.local/bin is on PATH
+grep -q '.local/bin' /home/dev/.bashrc || \
+  echo 'export PATH="/home/dev/.local/bin:$PATH"' >> /home/dev/.bashrc
+source /home/dev/.bashrc
+
+/home/dev/.local/bin/claude --version
+/home/dev/.local/bin/claude doctor        # installation health check
+```
+
+> Alternatives: npm `npm install -g @anthropic-ai/claude-code` (needs Node.js 22+;
+> **no** `sudo`), or the apt repo at `downloads.claude.ai/claude-code/apt`. The
+> native script above is the recommended path and self-updates.
+
+### A15.1 Authenticate on this headless server
+
+No browser on the server — use **one** of:
+
+- **API key (recommended for a server)** — create one at
+  `https://platform.claude.com` (Settings → API keys), then:
+  ```bash
+  # (as dev) — paste the key bare, no angle brackets
+  echo 'export ANTHROPIC_API_KEY=sk-ant-REPLACE_ME' >> /home/dev/.bashrc
+  source /home/dev/.bashrc
+  /home/dev/.local/bin/claude        # approve the key once when prompted
+  ```
+- **Subscription OAuth token (Pro/Max/Team)** — run `claude setup-token` on a
+  machine that HAS a browser (your laptop), approve, copy the printed token, then
+  on the server:
+  ```bash
+  # (as dev)
+  echo 'export CLAUDE_CODE_OAUTH_TOKEN=PASTE_TOKEN' >> /home/dev/.bashrc
+  source /home/dev/.bashrc
+  ```
+
+Credentials are stored at `/home/dev/.claude/.credentials.json` (mode `0600`); an
+API key supplied via the env var is used directly and not stored.
+
+### A15.2 Update + run
+
+```bash
+# (as dev)
+/home/dev/.local/bin/claude update                 # also auto-updates in background
+cd /home/dev/projects/ruuma && /home/dev/.local/bin/claude   # start a session in a project
+```
+
 ---
 
 # PART B — Onboard a project (repeat per project)
@@ -600,6 +655,7 @@ To onboard the next project, repeat **B1–B6** with its name.
 ```bash
 # (as dev)
 /usr/local/go/bin/go version                                 # Go installed
+/home/dev/.local/bin/claude --version                        # Claude Code installed
 sudo whoami                                                  # NOPASSWD sudo
 ssh -T git@github.com || true                                # git SSH auth
 sudo systemctl status postgresql --no-pager                  # PG running
