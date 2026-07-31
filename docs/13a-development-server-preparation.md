@@ -299,21 +299,29 @@ usermod -aG docker dev        # let dev run docker without sudo (re-login to app
 
 ```bash
 # (as root) — bind to localhost only; nothing WhatsApp is exposed publicly.
-# Set the dashboard login explicitly (replace 'change-me' with your own password).
+# Pin ALL three secrets so they survive restarts (replace the values):
+#   - dashboard login (WAHA_DASHBOARD_*)
+#   - API key (WAHA_API_KEY) — generate once: openssl rand -hex 16
+API_KEY="$(openssl rand -hex 16)"; echo "WAHA_API_KEY=$API_KEY"   # note this down
 docker run -d --name waha --restart unless-stopped \
   -p 127.0.0.1:3000:3000 \
   -e WAHA_DASHBOARD_USERNAME=admin \
   -e WAHA_DASHBOARD_PASSWORD=change-me \
+  -e WAHA_API_KEY="$API_KEY" \
   devlikeapro/waha
 ```
 
-> The WAHA dashboard has its **own** login (separate from the Linux `dev`
-> account). If you don't pass `WAHA_DASHBOARD_USERNAME`/`WAHA_DASHBOARD_PASSWORD`
-> you won't know the credentials and the dashboard will reject you — always set
-> them. To change them later: `docker rm -f waha` and re-run with new values.
-> The API on `127.0.0.1:3000` is left unauthenticated because it's localhost-only
-> and tunnel-access only; set `-e WHATSAPP_API_KEY=...` (and add
-> `-H "X-Api-Key: ..."` to `dev-notify`) if you want to lock it down too.
+> **Three separate logins on port 3000 — don't confuse them:**
+> - **Dashboard** (the web UI you open) → `WAHA_DASHBOARD_USERNAME` /
+>   `WAHA_DASHBOARD_PASSWORD`. Separate from the Linux `dev` account.
+> - **Swagger docs** → `WHATSAPP_SWAGGER_USERNAME` / `WHATSAPP_SWAGGER_PASSWORD`.
+> - **API calls** (what `dev-notify` uses) → the `WAHA_API_KEY` sent as an
+>   `X-Api-Key` header.
+>
+> ⚠️ WAHA Core **auto-generates `WAHA_API_KEY` on every start** if you don't pin
+> it — which would silently break `dev-notify` after any restart. Always pass
+> `-e WAHA_API_KEY=...` with a fixed value (as above). To change any secret
+> later: `docker rm -f waha` and re-run with new values.
 
 Link the dev WhatsApp number by scanning a QR:
 
@@ -333,6 +341,7 @@ cat >/etc/claudedev/whatsapp.env <<'EOF'
 WAHA_URL=http://127.0.0.1:3000
 WAHA_SESSION=default
 WHATSAPP_TO=628176315568
+WAHA_API_KEY=PASTE_THE_SAME_KEY_YOU_PINNED_IN_A13.2
 EOF
 chmod 0640 /etc/claudedev/whatsapp.env
 chown root:dev /etc/claudedev/whatsapp.env
@@ -345,6 +354,7 @@ set -a; source /etc/claudedev/whatsapp.env; set +a
 MSG="${*:-claudedev notification}"
 curl -fsS -X POST "${WAHA_URL}/api/sendText" \
   -H "Content-Type: application/json" \
+  -H "X-Api-Key: ${WAHA_API_KEY}" \
   -d "$(jq -n --arg s "$WAHA_SESSION" --arg to "${WHATSAPP_TO}@c.us" --arg body "$MSG" \
         '{session:$s, chatId:$to, text:$body}')"
 EOF
