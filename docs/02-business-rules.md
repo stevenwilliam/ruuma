@@ -36,6 +36,23 @@ and test names.
 - **BR-1.3.1** All timestamps are stored in UTC. The operating timezone for
   business-day logic is _TODO(domain)_.
 
+### 1.4 Configuration
+
+- **BR-1.4.1** Any value that can change without a code change (company phone,
+  email, address, tax rate, thresholds, feature toggles) is stored in the
+  `sys_parameters` table and read at runtime. Hard-coding such values is
+  prohibited.
+- **BR-1.4.2** `sys_parameters` has full CRUD — list (**with a search box**),
+  create, read, update, delete — restricted to an admin permission. Changes are
+  attributed (`updated_by`) and timestamped.
+- **BR-1.4.3** Parameters flagged `is_secret` are masked in the UI and never
+  written to logs.
+
+### 1.5 Data listing
+
+- **BR-1.5.1** Every screen that lists/tables data provides a search box that
+  filters that data. A list without search is non-conformant.
+
 ---
 
 ## 2. Domain rules

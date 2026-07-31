@@ -32,8 +32,8 @@ internal/
   domain/                  # pure business logic + types; exhaustively unit-tested; no I/O
   app/                     # use-cases / services; orchestrates domain + ports
   adapter/                 # driven & driving adapters
-    http/                  #   chi handlers, request/response mapping
-    postgres/              #   repositories (hand-written SQL)
+    http/                  #   gin handlers, request/response mapping
+    postgres/              #   gorm repositories (raw SQL on money paths)
     storage/               #   S3 / MinIO
     notify/                #   email / outbound
   platform/                # cross-cutting infra, business-agnostic, reusable across projects
@@ -51,14 +51,17 @@ those over reinventing.
 
 ## 3. Stack
 
-Backend: **Go 1.22+** · `chi` v5 (+ cors) · `pgx/v5` · **PostgreSQL 16** ·
-`golang-jwt/jwt/v5` · `google/uuid` · S3/MinIO (`minio-go/v7`) ·
-Prometheus (`client_golang`) · `golang.org/x/crypto`.
+Backend: **Go (latest)** · **`gin`** (HTTP) · **`gorm`** (ORM) +
+`gorm.io/driver/postgres` · **PostgreSQL 18** · `golang-jwt/jwt/v5` ·
+`google/uuid` · S3/MinIO (`minio-go/v7`) · Prometheus (`client_golang`) ·
+`golang.org/x/crypto`.
 
 Frontend (if/when there is a UI): **React 18** + **Vite 5** + **TypeScript 5** +
 **Tailwind 3**, `web/src/{components,lib,pages}`. Pin React to 18.
 
-No ORM. Hand-written SQL, reviewed and readable.
+ORM is `gorm`. **Exception:** any code path touching money uses explicit
+`gorm.Exec`/raw SQL with integer arithmetic — never rely on the ORM for money
+math (see §4).
 
 ---
 
@@ -111,7 +114,45 @@ No ORM. Hand-written SQL, reviewed and readable.
 
 ---
 
-## 7. Locale / environment
+## 7. Product & UI conventions
+
+- **Search box on every list.** Every screen that renders a list/table of data
+  must have a search box that filters that data. No exceptions — a list without
+  search is incomplete.
+- **Configurable values live in `sys_parameters`.** Anything that could change
+  without a code change — company phone number, email, address, tax rate,
+  feature toggles, business thresholds — is stored as a row in the
+  `sys_parameters` table, **not** hard-coded. Every such value ships with full
+  CRUD on `sys_parameters` (list + search, create, read, update, delete) behind
+  the appropriate admin permission. Read config through this table at runtime.
+
+## 8. Document control
+
+- **Always update related documents after each change**, in the same commit as
+  the change. PRD, business rules, data model, API spec, deployment/user/admin
+  guides — whatever the change touches. A change whose docs are stale is not done.
+- **OS / server guides use full absolute paths, never relative paths**, so a
+  copy-pasted command can never run in the wrong directory. This applies to the
+  production deployment handbook, `13a-development-server-preparation.md`, and
+  every runbook.
+
+## 9. Delivery workflow (how a ruuma build runs)
+
+The agreed sequence for taking ruuma from empty repo to shipped:
+
+1. **Initial git setup** — repo, remotes, conventions, this `CLAUDE.md`.
+2. **Steven — preparation.** Steven gives PRD & business-rules feedback, tuning,
+   and final confirmation. Nothing downstream starts until this is confirmed.
+3. **Claude — build all documents A→Z.** Complete the full doc set from the
+   confirmed PRD/business rules.
+4. **Claude — build all modules in one shot, A→Z.** Implement every module end
+   to end. **Do not stop** in the middle or after a few modules — go the whole way.
+5. **Claude — test, debug, and security-harden, A→Z.** Again **do not stop**
+   partway; carry it through the entire system.
+6. **Claude — production deployment handbook** (copy-paste, assuming an empty
+   machine, full absolute paths), **then** the user guide and the admin guide.
+
+## 10. Locale / environment
 
 > TODO(domain): timezone, currency, and language are product decisions. Fill in
 > once the domain is set (SCHOOLCATERING was Asia/Jakarta, IDR, EN/ID).

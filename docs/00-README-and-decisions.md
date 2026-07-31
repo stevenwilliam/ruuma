@@ -31,6 +31,7 @@ document, it wins. Build/working conventions live in `../CLAUDE.md`.
 | 09 | `09-deployment.md` | Production deployment (Docker/systemd, TLS, backups) |
 | 10 | `10-design-system.md` | Palette, typography, components, a11y |
 | 11 | `11-local-dev-setup.md` | Local dev environment and everyday commands |
+| 13a | `13a-development-server-preparation.md` | Fresh Ubuntu 26.04 dev-server setup (copy-paste, full paths) |
 
 Plus `PROGRESS.md` (live build status) and `RUN-WHEN-BACK.md` (interactive steps).
 
@@ -43,8 +44,12 @@ in the affected docs the same day.
 
 | ID | Date | Decision | Rationale | Docs touched |
 |----|------|----------|-----------|--------------|
-| D1 | 2026-07-31 | Adopt the SCHOOLCATERING house style (hexagonal Go, hand-written SQL, numbered docs, money-as-integers, UUIDv7). | Proven; reusable `platform/*`. | CLAUDE.md, all |
-| D2 | — | _TODO: what ruuma actually is._ | | |
+| D1 | 2026-07-31 | Adopt the SCHOOLCATERING house style (hexagonal Go, numbered docs, money-as-integers, UUIDv7). | Proven; reusable `platform/*`. | CLAUDE.md, all |
+| D2 | 2026-07-31 | **Backend stack = Go (latest) + gin + gorm + PostgreSQL 18** (supersedes chi/pgx/no-ORM for ruuma). Money paths still use raw SQL + integer math. | Steven's directive for ruuma. | CLAUDE.md, 05, README |
+| D3 | 2026-07-31 | Add development-server preparation handbook (`13a`), copy-paste, fresh Ubuntu 26.04. | Develop on a dedicated server, not VS local. | 13a |
+| D4 | 2026-07-31 | Conventions: search box on every list; configurable values in `sys_parameters` + CRUD; docs updated with every change; OS guides use full absolute paths. | Steven's standing preferences. | CLAUDE.md, 02, 03, 05, 10 |
+| D5 | 2026-07-31 | Delivery workflow = prep→confirm → docs A–Z → build all modules one shot → test/harden one shot → deployment handbook + user/admin guides. | Steven's process. | CLAUDE.md §9, 08 |
+| D6 | — | _TODO: what ruuma actually is (domain)._ | | |
 
 ---
 

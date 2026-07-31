@@ -29,6 +29,13 @@ variables, light + dark.
 
 > TODO: buttons, inputs, cards, tables, toasts — states and a11y.
 
+### 3.1 Lists & tables — search box is mandatory
+
+Every list/table view **must** include a search box that filters its data
+(BR-1.5.1). The search input sits at the top of the list, is debounced, and
+searches the columns relevant to that entity. This is a non-negotiable pattern,
+not a per-screen decision.
+
 ## 4. Accessibility
 
 - AA contrast, visible focus rings, keyboard-navigable, respects

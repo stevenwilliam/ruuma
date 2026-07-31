@@ -12,6 +12,18 @@ Front-load the operational spine (the thing that delivers the core value), not
 the fun-to-demo surface. Everything before the first real run is cost; everything
 after is investment against known demand.
 
+## 1a. Agreed delivery workflow
+
+Per `CLAUDE.md §9` (decision D5):
+
+1. Initial git setup.
+2. **Steven** — PRD & business-rules feedback, tuning, confirmation.
+3. **Claude** — build all documents A→Z.
+4. **Claude** — build all modules in one shot A→Z (no stopping partway).
+5. **Claude** — test, debug, security-harden A→Z (no stopping partway).
+6. **Claude** — production deployment handbook (copy-paste, empty machine, full
+   paths), then user guide and admin guide.
+
 ## 2. Milestones
 
 ### M0 — Definition (now)

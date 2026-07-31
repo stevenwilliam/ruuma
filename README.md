@@ -2,9 +2,10 @@
 
 > TODO(domain): one-line description of what ruuma is.
 
-Greenfield product built in the ruuma house style: **Go + PostgreSQL** backend,
-**React + TypeScript** frontend, hexagonal architecture, hand-written SQL, pure
-and exhaustively-tested domain layer. Full product and engineering spec lives in
+Greenfield product built in the ruuma house style: **Go (gin + gorm) +
+PostgreSQL 18** backend, **React + TypeScript** frontend, hexagonal
+architecture, pure and exhaustively-tested domain layer. Full product and
+engineering spec lives in
 [`docs/`](docs/) — [`docs/02-business-rules.md`](docs/02-business-rules.md) is
 normative. Build/working conventions are in [`CLAUDE.md`](CLAUDE.md).
 
@@ -14,8 +15,9 @@ kicks off the discussion to define the product before any code is written.
 
 ## Stack
 
-Go 1.22+ · chi · pgx/v5 · PostgreSQL 16 · S3/MinIO · JWT · Prometheus ·
-React 18 + Vite + Tailwind. No ORM on money paths; the domain layer is pure.
+Go (latest) · gin · gorm · PostgreSQL 18 · S3/MinIO · JWT · Prometheus ·
+React 18 + Vite + Tailwind. gorm is the ORM; money paths use raw SQL with
+integer math. The domain layer is pure.
 
 ## Quick start (local)
 

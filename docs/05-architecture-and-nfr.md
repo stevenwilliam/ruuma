@@ -9,16 +9,23 @@
 
 | Layer | Choice | Notes |
 |---|---|---|
-| Language | Go 1.22+ | Transactional API + background workers |
-| HTTP | `chi` v5 (+ cors) | Standard-library-shaped, no framework lock-in |
-| Database | PostgreSQL 16 | |
-| DB access | `pgx/v5` | Hand-written SQL. No ORM on money paths. |
-| Migrations | numbered SQL, embedded | Forward-only in production |
+| Language | Go (latest) | Transactional API + background workers |
+| HTTP | `gin` | Router + middleware |
+| Database | PostgreSQL 18 | |
+| DB access | `gorm` + `gorm.io/driver/postgres` | ORM. **Money paths use raw SQL** with integer math (BR-1.1.x). |
+| Migrations | numbered SQL, embedded | Forward-only in production; gorm models map to these tables |
 | Auth | `golang-jwt/jwt/v5` | + `golang.org/x/crypto` for hashing |
 | Object storage | S3-compatible / MinIO (`minio-go/v7`) | Images, proofs, PDFs |
 | Observability | Prometheus (`client_golang`) + structured logs | `/metrics`, request logging |
 | IDs | `google/uuid` (v7) | |
-| Frontend | React 18 + Vite + TypeScript + Tailwind | Pin React 18 |
+| Frontend | React 18 + Vite + TypeScript + Tailwind | Pin React 18; every list has a search box |
+
+### 1.1 Configuration via `sys_parameters`
+
+Any value that can change without a deploy (company phone/email/address, tax
+rate, thresholds, feature toggles) is a row in the **`sys_parameters`** table
+with full CRUD (list+search, create, read, update, delete) behind an admin
+permission. The app reads these at runtime — never hard-code them.
 
 ## 2. Layering
 

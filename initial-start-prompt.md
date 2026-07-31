@@ -12,10 +12,11 @@ You are starting work on ruuma, a greenfield project.
 
 Before anything else:
 1. Read CLAUDE.md in full — it is the build contract. Follow it exactly,
-   including: hexagonal architecture (domain/app/adapter/platform), Go + chi +
-   pgx + PostgreSQL, money-as-integers, UUIDv7 ids, numbered migrations,
-   docs-are-normative, editor is vi, and auto-commit + push after every
-   completed change.
+   including: hexagonal architecture (domain/app/adapter/platform), Go + gin +
+   gorm + PostgreSQL 18 (raw SQL on money paths), money-as-integers, UUIDv7 ids,
+   numbered migrations, search box on every list, configurable values in
+   sys_parameters with CRUD, docs-are-normative, editor is vi, full absolute
+   paths in OS guides, and auto-commit + push after every completed change.
 2. Skim docs/00 through docs/11 and docs/PROGRESS.md so you know the doc set and
    its current (placeholder) state.
 
