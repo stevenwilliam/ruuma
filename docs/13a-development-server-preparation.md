@@ -305,12 +305,22 @@ usermod -aG docker dev        # let dev run docker without sudo (re-login to app
 API_KEY="$(openssl rand -hex 16)"; echo "WAHA_API_KEY=$API_KEY"   # note this down
 docker run -d --name waha --restart unless-stopped \
   -p 127.0.0.1:3000:3000 \
+  -v waha_sessions:/app/.sessions \
   -e WAHA_DASHBOARD_USERNAME=admin \
   -e WAHA_DASHBOARD_PASSWORD=change-me \
   -e WAHA_API_KEY="$API_KEY" \
   -e WHATSAPP_DEFAULT_ENGINE=NOWEB \
   devlikeapro/waha
 ```
+
+> **Persist the session with `-v waha_sessions:/app/.sessions`.** Without a
+> volume, every `docker rm` wipes the WhatsApp login and you must re-link. With
+> it, the link survives container recreates and reboots. (Verify the path on your
+> version: `docker exec waha ls -la /app/.sessions`.)
+> **Also: create the session named exactly `default`** via the API (next step) —
+> if you "Start" one from the dashboard it gets an auto-generated name like
+> `session_01k...`, which won't match `WAHA_SESSION=default` in `dev-notify` and
+> every send returns `422`.
 
 > **Use the `NOWEB` engine on a server.** WAHA's default `WEBJS` engine drives a
 > headless Chromium, which is heavy and crashes on low-RAM boxes (symptom:
