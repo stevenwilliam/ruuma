@@ -1,0 +1,21 @@
+# Env / secrets
+.env
+*.local
+
+# Go
+/bin/
+*.exe
+*.test
+*.out
+coverage.*
+
+# Node / web
+node_modules/
+web/dist/
+*.tsbuildinfo
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
