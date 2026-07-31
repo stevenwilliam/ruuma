@@ -298,11 +298,22 @@ usermod -aG docker dev        # let dev run docker without sudo (re-login to app
 ### A13.2 Run WAHA and link your number (as root, then tunnel from laptop)
 
 ```bash
-# (as root) — bind to localhost only; nothing WhatsApp is exposed publicly
+# (as root) — bind to localhost only; nothing WhatsApp is exposed publicly.
+# Set the dashboard login explicitly (replace 'change-me' with your own password).
 docker run -d --name waha --restart unless-stopped \
   -p 127.0.0.1:3000:3000 \
+  -e WAHA_DASHBOARD_USERNAME=admin \
+  -e WAHA_DASHBOARD_PASSWORD=change-me \
   devlikeapro/waha
 ```
+
+> The WAHA dashboard has its **own** login (separate from the Linux `dev`
+> account). If you don't pass `WAHA_DASHBOARD_USERNAME`/`WAHA_DASHBOARD_PASSWORD`
+> you won't know the credentials and the dashboard will reject you — always set
+> them. To change them later: `docker rm -f waha` and re-run with new values.
+> The API on `127.0.0.1:3000` is left unauthenticated because it's localhost-only
+> and tunnel-access only; set `-e WHATSAPP_API_KEY=...` (and add
+> `-H "X-Api-Key: ..."` to `dev-notify`) if you want to lock it down too.
 
 Link the dev WhatsApp number by scanning a QR:
 
