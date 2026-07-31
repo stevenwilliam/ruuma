@@ -3,7 +3,7 @@
 **Version:** 0.1 (scaffold)
 **Date:** 31 July 2026
 
-REST over HTTP, `chi` router. JSON in/out. JWT auth. All responses share one
+REST over HTTP, `gin` router. JSON in/out. JWT auth. All responses share one
 error model.
 
 ---

@@ -3,8 +3,10 @@
 **Version:** 0.1 (scaffold)
 **Date:** 31 July 2026
 
-PostgreSQL 16. Hand-written SQL, no ORM. UUIDv7 primary keys (BR-1.2.1). Money
-as `BIGINT` (BR-1.1.1). Timestamps `timestamptz` in UTC (BR-1.3.1).
+PostgreSQL 18. `gorm` ORM (raw SQL on money paths). UUIDv7 primary keys
+(BR-1.2.1). Money as `BIGINT` (BR-1.1.1). Timestamps `timestamptz` in UTC
+(BR-1.3.1). gorm models map 1:1 to the numbered SQL migrations — migrations are
+the source of truth, not `AutoMigrate`.
 
 ---
 
