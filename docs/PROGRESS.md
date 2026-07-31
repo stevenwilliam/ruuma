@@ -12,7 +12,7 @@ _Last updated: 2026-07-31 (scaffold + stack decision + dev-server handbook)._
 - ✅ Stack decided: **Go + gin + gorm + PostgreSQL 18** (D2)
 - ✅ Conventions locked: search-box-on-lists, `sys_parameters` config, full-path OS guides, doc control (D4)
 - ✅ Delivery workflow agreed (D5, `CLAUDE.md §9`)
-- ✅ `13a-development-server-preparation.md` (fresh Ubuntu 26.04, copy-paste)
+- ✅ `13a-development-server-preparation.md` — shared `claudedev` server (Part A setup once + Part B onboard-a-project); ruuma is the worked example (D6)
 - ⬜ Product-definition discussion → fill 01/02/03 (step 2 of workflow)
 - ⬜ Resolve open questions in `00`
 

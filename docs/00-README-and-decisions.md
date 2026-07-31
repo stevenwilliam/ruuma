@@ -31,7 +31,7 @@ document, it wins. Build/working conventions live in `../CLAUDE.md`.
 | 09 | `09-deployment.md` | Production deployment (Docker/systemd, TLS, backups) |
 | 10 | `10-design-system.md` | Palette, typography, components, a11y |
 | 11 | `11-local-dev-setup.md` | Local dev environment and everyday commands |
-| 13a | `13a-development-server-preparation.md` | Fresh Ubuntu 26.04 dev-server setup (copy-paste, full paths) |
+| 13a | `13a-development-server-preparation.md` | Shared `claudedev` dev server — Part A (setup once) + Part B (onboard a project); copy-paste, full paths |
 
 Plus `PROGRESS.md` (live build status) and `RUN-WHEN-BACK.md` (interactive steps).
 
@@ -49,7 +49,8 @@ in the affected docs the same day.
 | D3 | 2026-07-31 | Add development-server preparation handbook (`13a`), copy-paste, fresh Ubuntu 26.04. | Develop on a dedicated server, not VS local. | 13a |
 | D4 | 2026-07-31 | Conventions: search box on every list; configurable values in `sys_parameters` + CRUD; docs updated with every change; OS guides use full absolute paths. | Steven's standing preferences. | CLAUDE.md, 02, 03, 05, 10 |
 | D5 | 2026-07-31 | Delivery workflow = prep→confirm → docs A–Z → build all modules one shot → test/harden one shot → deployment handbook + user/admin guides. | Steven's process. | CLAUDE.md §9, 08 |
-| D6 | — | _TODO: what ruuma actually is (domain)._ | | |
+| D6 | 2026-07-31 | Dev server is **shared across many projects**, hostname **`claudedev`**. `13a` restructured into Part A (server once) + Part B (onboard a project); ruuma is the worked example. Shared config under `/etc/claudedev/`, per-project under `/etc/<project>/`, projects at `/home/dev/projects/<project>`, nginx reverse proxy fronts project ports. | Steven's directive. | 13a |
+| D7 | — | _TODO: what ruuma actually is (domain)._ | | |
 
 ---
 
