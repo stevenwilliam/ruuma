@@ -507,13 +507,22 @@ chown root:dev /etc/ruuma/ruuma.env
 # (as dev)
 mkdir -p /home/dev/actions-runner/ruuma
 cd /home/dev/actions-runner/ruuma
-RUNNER_VER="2.320.0"    # check https://github.com/actions/runner/releases
+# resolve the CURRENT runner version automatically (a hard-pinned version 404s once stale)
+RUNNER_VER="$(curl -fsSL https://api.github.com/repos/actions/runner/releases/latest | jq -r .tag_name | sed 's/^v//')"
+echo "runner version: $RUNNER_VER"
 curl -fLO "https://github.com/actions/runner/releases/download/v${RUNNER_VER}/actions-runner-linux-x64-${RUNNER_VER}.tar.gz"
 tar xzf "/home/dev/actions-runner/ruuma/actions-runner-linux-x64-${RUNNER_VER}.tar.gz"
-# Token: GitHub repo → Settings → Actions → Runners → New self-hosted runner
-./config.sh --url https://github.com/stevenwilliam/ruuma --token <RUNNER_TOKEN> \
+# RUNNER TOKEN: repo → Settings → Actions → Runners → New self-hosted runner.
+# Copy the value after --token there (starts with 'A', ~29 chars, expires ~1h).
+# Paste it bare below (no angle brackets). config.sh MUST run as dev, not root.
+./config.sh --url https://github.com/stevenwilliam/ruuma --token PASTE_RUNNER_TOKEN \
   --name claudedev-ruuma --labels claudedev,ruuma --unattended
 ```
+
+> The token is a short-lived **registration** token GitHub generates on that page
+> — not a PAT or password. If registration says "token expired", reload the
+> Runners page for a fresh one. For an **org** (many repos), get it from
+> Org Settings → Actions → Runners instead, and it's shared across all org repos.
 
 ```bash
 # (as root)
