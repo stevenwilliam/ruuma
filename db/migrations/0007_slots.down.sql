@@ -1,0 +1,2 @@
+DROP TABLE IF EXISTS delivery_zones;
+DROP TABLE IF EXISTS slots;

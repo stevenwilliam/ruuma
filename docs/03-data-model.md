@@ -850,16 +850,28 @@ CREATE TABLE idempotency_keys (
 ## 4. Migration notes
 
 - Migrations live in `db/migrations/NNNN_name.up.sql` + `.down.sql`, embedded via
-  `db/embed.go`, forward-only in production.
-- Order: `0001` extensions (`citext`) → `0002` sys_parameters + users →
-  `0003` stores and store master data → `0004` customers and auth →
-  `0005` menu → `0006` availability → `0007` slots → `0008` orders →
-  `0009` payments → `0010` promotions → `0011` cross-cutting →
-  `0012` seed reference data → `0013` seed demo data (stores, menu, staff).
-- **Append-only tables** (`order_events`, `payment_events`, `audit_log`) have
-  their `UPDATE`/`DELETE` privileges revoked from the application role in the
-  same migration that creates them (BR-2.10.2).
+  `db/embed.go`, forward-only in production. `db.Migrations()` refuses to load a
+  step that is missing its `.down.sql`.
+- Applied order (as built): `0001` extensions (`citext`) → `0002` users +
+  `sys_parameters` → `0003` stores and store master data → `0004` customers and
+  auth → `0005` menu → `0006` availability → `0007` slots + delivery zones →
+  `0008` promotions → `0009` orders, lines, options, events, redemptions →
+  `0010` payments → `0011` cross-cutting + append-only triggers →
+  `0012` reference data (the `sys_parameters` defaults and message templates).
+  Ordering is driven by foreign keys: `promotions` and `delivery_zones` precede
+  `orders`, and `promotion_redemptions` follows it.
+- **Demo data is not a migration.** Three seed stores, the menu and the staff
+  accounts are loaded by `cmd/api seed`, so a production deployment never
+  receives fake stores. Only reference data (`0012`) ships in the schema.
+- **UUIDv7 in SQL:** PostgreSQL 18 provides `uuidv7()` natively, which is what
+  the reference-data migration uses (BR-1.2.1). Application inserts use
+  `platform/id`.
+- **Append-only tables** (`order_events`, `payment_events`, `audit_log`) are
+  enforced by a `BEFORE UPDATE OR DELETE` trigger raising `restrict_violation`,
+  **not** by a `REVOKE` (BR-2.10.2). A revoke would not bind the owner role, and
+  these tables are financial and legal evidence; a correction is a new row.
 - The application connects as a **least-privilege role** with no `CREATE` right;
   migrations run as the owner (`09-deployment.md`).
-- Every `.down.sql` is exercised by `make migrate-down` against a fresh
-  `ruuma_test` database in CI.
+- Every `.down.sql` is exercised by CI, which runs **up → down → up** on a fresh
+  `ruuma_test` database. Verified locally on 2026-08-02: 12 migrations, 41
+  tables, 39 reference rows.
