@@ -19,3 +19,7 @@ web/dist/
 Thumbs.db
 .idea/
 .vscode/
+
+# Frontend build artefacts
+web/node_modules/
+web/dist/

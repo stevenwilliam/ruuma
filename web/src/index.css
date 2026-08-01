@@ -1,0 +1,84 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Design tokens — docs/10 §2. Sampled from the supplied logo (#277066); every
+   foreground/background pair is contrast-checked at AA or better. */
+:root {
+  --bg: #f7f9f8;
+  --surface: #ffffff;
+  --border: #dce5e1;
+  --text: #101915;
+  --text-muted: #5a6b65;
+  --primary: #277066;
+  --primary-hover: #1f5b53;
+  --primary-fg: #ffffff;
+  --primary-subtle: #e6f2ef;
+  --warning: #b45309;
+  --danger: #b3261e;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg: #0d1512;
+    --surface: #14201c;
+    --border: #24352f;
+    --text: #e8f0ec;
+    --text-muted: #9fb3ab;
+    --primary: #4fa695;
+    --primary-hover: #6fbcac;
+    --primary-fg: #0d1512;
+    --primary-subtle: #17332c;
+    --warning: #f0b357;
+    --danger: #ff9a8a;
+    color-scheme: dark;
+  }
+}
+
+:root[data-theme='dark'] {
+  --bg: #0d1512;
+  --surface: #14201c;
+  --border: #24352f;
+  --text: #e8f0ec;
+  --text-muted: #9fb3ab;
+  --primary: #4fa695;
+  --primary-hover: #6fbcac;
+  --primary-fg: #0d1512;
+  --primary-subtle: #17332c;
+  --warning: #f0b357;
+  --danger: #ff9a8a;
+  color-scheme: dark;
+}
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: Inter, system-ui, sans-serif;
+  margin: 0;
+  min-height: 100dvh;
+}
+
+/* Focus is always visible — never removed for looks (docs/10 §4). */
+:where(a, button, input, select, textarea, [tabindex]):focus-visible {
+  outline: 2px solid var(--primary);
+  outline-offset: 2px;
+  border-radius: 4px;
+}
+
+/* Prices align in columns (docs/10 §3). */
+.tabular { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+@media print {
+  .no-print { display: none !important; }
+  body { background: #fff; color: #000; }
+}
