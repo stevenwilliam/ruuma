@@ -12,8 +12,11 @@ import StaffAdmin from '../pages/admin/StaffAdmin'
 import AuditAdmin from '../pages/admin/AuditAdmin'
 import StoresAdmin from '../pages/admin/StoresAdmin'
 
+// globalThis, not `global`: the browser tsconfig has no Node types, and using
+// `global` broke `npm run typecheck` and the production build while the tests
+// themselves still passed under vitest.
 function mockFetch(payload: unknown) {
-  global.fetch = vi.fn().mockResolvedValue({
+  globalThis.fetch = vi.fn().mockResolvedValue({
     ok: true,
     status: 200,
     text: async () => JSON.stringify(payload),
