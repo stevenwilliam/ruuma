@@ -9,10 +9,14 @@
 
 ## 1. What this document set is
 
-The engineering & product spec for ruuma, built in the house style. It starts as
-a structured scaffold: the shape and conventions are real; the domain-specific
-content is `TODO(domain)` until the first product-definition discussion (see
-`../initial-start-prompt.md`).
+The engineering & product spec for ruuma, built in the house style. The domain is
+defined (D8) and the scope rulings are recorded (D9–D29); documents `01`–`10`
+and `12` are being rewritten from that scope — some still carry scaffold text
+until their rewrite lands (see `PROGRESS.md`).
+
+House style itself — how Steven works, and his stack, database and security
+preferences — lives in `99-steven-preference.md` and is portable to other
+projects.
 
 `02-business-rules.md` is **normative** — where it conflicts with any other
 document, it wins. Build/working conventions live in `../CLAUDE.md`.
@@ -33,6 +37,7 @@ document, it wins. Build/working conventions live in `../CLAUDE.md`.
 | 11 | `11-local-dev-setup.md` | Local dev environment and everyday commands |
 | 12 | `12-security.md` | OWASP ASVS L2 / Top-10 control map, abuse cases, security test suite |
 | 13a | `13a-development-server-preparation.md` | Shared `claudedev` dev server — Part A (setup once) + Part B (onboard a project); copy-paste, full paths |
+| 99 | `99-steven-preference.md` | Steven's portable engineering DNA — how he works, stack/DB/security preferences; **project-agnostic, copy into any new repo** |
 
 Plus `PROGRESS.md` (live build status) and `RUN-WHEN-BACK.md` (interactive steps).
 
@@ -73,6 +78,7 @@ in the affected docs the same day.
 | D26 | 2026-08-02 | **Finance keeps an explicit REJECT action** with a mandatory reason (amount mismatch, unreadable proof, not received, duplicate). Rejection returns the order to UNPAID, is recorded immutably in `payment_events` + audit log, and **never releases the slot**. The customer may upload a new proof. Amends D13. | Steven's directive. | 02, 03, 04, 06 |
 | D27 | 2026-08-02 | **Blackout dates may target the current day** (emergency closure). A blackout takes effect immediately: all remaining slots for that store/date stop accepting new orders. **Already-booked orders are never auto-cancelled** — they surface in an "affected by closure" panel for staff to cancel and refund by hand. Blackout requires a reason and is audited. Precedence stays: per-date schedule override > blackout > weekday schedule (D18). | Steven's directive; consistent with "no machine cancels a customer's slot" (D13). | 02, 03, 04, 06 |
 | D28 | 2026-08-02 | **Notification scope trimmed.** Payment rejection and payment queries are handled **manually by finance/operations** — no automated message. Automated WhatsApp is limited to: order received (with transfer instructions + *kode unik* amount), payment verified, order ready for pickup, and a pre-slot reminder. Templates live in `sys_parameters`, each event individually switchable. | Steven: manual verification, no rejection notification. | 02, 04, 06 |
+| D29 | 2026-08-02 | **Add `docs/99-steven-preference.md`** — Steven's portable engineering DNA (working style, delivery workflow, architecture, Go/React stack, database conventions, security posture, product/UI conventions, infra defaults, doc-set convention, anti-patterns, bootstrap checklist). Deliberately **project-agnostic** so it can be copied verbatim into any new repo; a project's own `CLAUDE.md` wins where they conflict. | Carry the same DNA across projects without re-deriving it. | 00, 99 |
 
 ---
 
