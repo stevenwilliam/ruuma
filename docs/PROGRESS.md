@@ -2,7 +2,7 @@
 
 Live status. Legend: ✅ done & tested · 🟡 partial · ⬜ not started.
 
-_Last updated: 2026-08-02 (build complete through step 4: docs, service, frontend, tests and hardening)._
+_Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden → handbooks)._
 
 ## M0 — Definition
 - ✅ Repo created + `git init`, pushed to `origin`
@@ -46,9 +46,10 @@ _Last updated: 2026-08-02 (build complete through step 4: docs, service, fronten
 - ✅ Three real defects found by the suites and fixed (`docs/12` §6)
 
 ## M4 — Handbooks (step 6 of the workflow)
-- ⬜ `14-production-deployment-handbook.md` (empty Ubuntu, copy-paste, absolute paths)
-- ⬜ `15-user-guide.md`
-- ⬜ `16-admin-guide.md`
+- ✅ `14-production-deployment-handbook.md` — empty Ubuntu 24.04/26.04, copy-paste, full absolute paths, `vi`
+- ✅ `cmd/api create-owner` — the first-run flow, so production ships with no default credentials
+- ✅ `15-user-guide.md` — customer guide, ID first with EN alongside
+- ✅ `16-admin-guide.md` — kitchen, counter, finance, store manager, admin
 
 ## Known gaps
 See `docs/12-security.md` §7: object-storage upload rules, OAuth providers,

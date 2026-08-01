@@ -1,35 +1,83 @@
 # Run when you're back — interactive verification
 
-Steps that need an interactive terminal (Docker, a live server, approval
-prompts). Run them top to bottom in a shell from the repo root. Use `vi` for any
-edits.
+Steps that need an interactive terminal, a browser, or credentials that do not
+exist yet. Everything else has already been run; what is here is what could not
+be, and why. Use `vi` for any edits.
 
-> Nothing to run yet — the service isn't scaffolded. This file fills in as M1
-> lands. The template below is the shape it will take.
+_Updated: 2026-08-02._
 
-## 1. Prerequisites (one-time)
+## Already done — no action needed
 
-```bash
-cp .env.example .env
-```
+These ran during the build and are reported in `docs/12-security.md` §6:
 
-## 2. Start the local stack
+- `go test ./...`, integration, security and e2e suites — all green
+- `go vet`, `staticcheck`, `gosec`, `govulncheck` — clean
+- Migrations up → down → up on an empty database
+- `cmd/api seed` and `cmd/api create-owner` against a live PostgreSQL 18
+- The API served and smoke-tested over HTTP
+- Frontend typecheck, lint, unit tests and production build
 
-```bash
-docker compose up -d
-docker compose ps            # all healthy
-```
-
-## 3. Migrate + seed
+## 1. See the whole thing running locally
 
 ```bash
-go run ./cmd/api migrate
+cd /home/dev/projects/ruuma
+docker compose -f /home/dev/projects/ruuma/docker-compose.yml up -d   # MinIO + mailpit
+make migrate
+make seed
+make run          # API on 127.0.0.1:8080
 ```
 
-## 4. Run + smoke test
+In a second terminal:
 
 ```bash
-go run ./cmd/api serve
-# in another shell:
-curl -s localhost:8080/health
+cd /home/dev/projects/ruuma/web
+npm run dev       # http://127.0.0.1:5173
 ```
+
+The seed prints a generated staff password — sign in to the admin at
+`/admin` with `owner@ruuma.id` and that password.
+
+## 2. Exercise the object-storage path by hand
+
+The automated suites use an in-memory stand-in, so the real MinIO path is the
+one gap worth walking (`docs/12` §7):
+
+1. Place an order in the customer UI.
+2. Upload a payment proof — try a `.png` that is really an HTML file, and a file
+   over 5 MB; both must be refused.
+3. In the admin finance queue, open the proof: the link must be presigned and
+   expire.
+
+## 3. Send a real WhatsApp message
+
+Notifications default to the `log` provider so a local run never touches the
+shared WAHA session. To test a real send, to your own number only:
+
+```bash
+# Admin → Parameters → notify.provider = waha
+make worker
+```
+
+Then place an order and watch `journalctl`/stdout for the dispatch.
+
+## 4. Google and Instagram sign-in
+
+Blocked on credentials (`docs/00` Q8). Both flows are built and refuse cleanly
+while disabled. When the OAuth apps exist:
+
+1. Put the client id/secret in `/home/dev/projects/ruuma/.env`.
+2. Admin → Parameters → `auth.provider_google_enabled` = `true`.
+3. Note that Instagram returns no email or phone, so those customers must add
+   and verify a phone before their first order.
+
+## 5. Production deployment
+
+`docs/14-production-deployment-handbook.md` is written for an empty machine and
+has not been executed — there is no production server yet. Work through it top
+to bottom, then the go-live checklist in §13.
+
+## 6. Load and latency
+
+The p95 targets in `docs/05-architecture-and-nfr.md` §4 have not been measured.
+Worth doing before the first busy Friday: `k6` or `hey` against
+`/api/v1/menu` and `/api/v1/availability/slots` at 100 concurrent.

@@ -3,16 +3,15 @@
 **Product codename:** ruuma
 **Version:** 0.2 (domain defined)
 **Date:** 2 August 2026
-**Status:** domain defined (D8) — docs being written A–Z, build not started
+**Status:** built. Docs, service, frontend, tests and handbooks complete (see `PROGRESS.md`); phase 1 is pickup-only with manual transfer.
 
 ---
 
 ## 1. What this document set is
 
-The engineering & product spec for ruuma, built in the house style. The domain is
-defined (D8) and the scope rulings are recorded (D9–D29); documents `01`–`10`
-and `12` are being rewritten from that scope — some still carry scaffold text
-until their rewrite lands (see `PROGRESS.md`).
+The engineering & product spec for ruuma, built in the house style. The domain
+is defined (D8), the scope rulings are recorded (D9–D29), and documents `01`–`16`
+are written against the built system.
 
 House style itself — how Steven works, and his stack, database and security
 preferences — lives in `99-steven-preference.md` and is portable to other
@@ -37,6 +36,9 @@ document, it wins. Build/working conventions live in `../CLAUDE.md`.
 | 11 | `11-local-dev-setup.md` | Local dev environment and everyday commands |
 | 12 | `12-security.md` | OWASP ASVS L2 / Top-10 control map, abuse cases, security test suite |
 | 13a | `13a-development-server-preparation.md` | Shared `claudedev` dev server — Part A (setup once) + Part B (onboard a project); copy-paste, full paths |
+| 14 | `14-production-deployment-handbook.md` | Empty-machine production deployment; copy-paste, full absolute paths |
+| 15 | `15-user-guide.md` | Customer guide (ID/EN) |
+| 16 | `16-admin-guide.md` | Staff guide: kitchen, counter, finance, store manager, admin |
 | 99 | `99-steven-preference.md` | Steven's portable engineering DNA — how he works, stack/DB/security preferences; **project-agnostic, copy into any new repo** |
 
 Plus `PROGRESS.md` (live build status) and `RUN-WHEN-BACK.md` (interactive steps).
