@@ -84,10 +84,26 @@ service, brute-forcing OTPs or promo codes, and getting a stored file to execute
 
 ### A06 Vulnerable and outdated components
 
-`govulncheck`, `gosec`, `staticcheck` and `npm audit` run in `make check` and in
-CI on every push. Go and npm dependencies are pinned (`go.sum`,
-`package-lock.json`). Update cadence: dependency review monthly, security
-advisories acted on within 7 days, Go minor upgrades within 30 days of release.
+`govulncheck`, `gosec`, `staticcheck` and the npm dependency gate run in
+`make check` and in CI on every push. Go and npm dependencies are pinned to
+exact versions (no caret ranges), with `go.sum` and `package-lock.json`
+committed. Update cadence: dependency review monthly, security advisories acted
+on within 7 days, Go minor upgrades within 30 days of release.
+
+**The npm gate is not `npm audit || true`.** `web/scripts/audit.mjs` fails the
+build on any high or critical advisory that is not explicitly accepted, and an
+acceptance carries a reason and a **review date** that itself fails the build
+once passed.
+
+Currently accepted, one advisory:
+
+| Advisory | Package | Why it does not apply | Review by |
+|---|---|---|---|
+| `GHSA-qwww-vcr4-c8h2` | `react-router` 7.18.2 | RSC-mode CSRF bypass. ruuma ships a **client-only SPA** — no React Router server/framework mode, no RSC, no server actions — so the affected code path is not in our build. Every other published react-router 7 version carries a longer advisory list, so this is the safest available pin. | 2026-11-01 |
+
+Verified during the hardening pass: `govulncheck` reports **0** vulnerabilities
+reachable from ruuma's code (quic-go was upgraded past GO-2026-5676), and the
+npm gate reports no unaccepted high or critical advisory.
 
 ### A07 Identification and authentication failures
 

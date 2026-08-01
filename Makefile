@@ -120,8 +120,8 @@ web-test:
 	cd $(ROOT)/web && npm run test -- --run
 
 .PHONY: web-audit
-web-audit:
-	cd $(ROOT)/web && npm audit --audit-level=high || true
+web-audit: ## dependency gate: fails on any unaccepted high/critical advisory
+	cd $(ROOT)/web && npm run audit
 
 # ── dev environment ───────────────────────────────────────────────────────────
 .PHONY: up

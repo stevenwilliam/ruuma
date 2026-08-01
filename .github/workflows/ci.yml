@@ -91,5 +91,6 @@ jobs:
       - run: npm run typecheck
       - run: npm run test -- --run
       - run: npm run build
-      - run: npm audit --audit-level=high
-        continue-on-error: true
+      # The gate fails on any unaccepted high/critical advisory; accepted ones
+      # are listed with a reason and a review date in web/scripts/audit.mjs.
+      - run: npm run audit
