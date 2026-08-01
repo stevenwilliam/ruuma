@@ -157,6 +157,13 @@ image), and a header/CSP assertion test.
 
 - `ruuma_test` is dropped and recreated per integration run; migrations are
   applied **up then down then up** to prove both directions.
+- **The suites share one database and are serialised by a Postgres advisory
+  lock.** Each environment truncates and re-seeds, so two running at once would
+  pull the fixtures from under each other — and `go test` parallelises packages
+  by default, which makes that easy to trip into. A suite that fails only when
+  something else is running is worse than no suite, so the harness takes
+  `pg_advisory_lock` for its lifetime. Verified by running all three suites
+  concurrently.
 - Seed fixtures mirror the demo seed: three stores with different closed days,
   modes and hours; a menu spanning all three cuisines; staff for every role,
   each scoped to a different store — which is what makes the cross-store tests

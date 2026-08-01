@@ -45,6 +45,10 @@ import (
 
 const signingKey = "test-signing-key-at-least-32-bytes-long!!"
 
+// testEnvLockID is an arbitrary but fixed key for the advisory lock that keeps
+// two test environments from sharing the database at the same time.
+const testEnvLockID int64 = 0x7275756D61 // "ruuma"
+
 // Env is a running stack.
 type Env struct {
 	T        *testing.T
@@ -148,6 +152,29 @@ func newEnv(t *testing.T, limits adapterhttp.Limits) *Env {
 	if err := conn.PingContext(ctx); err != nil {
 		t.Skipf("test database unavailable: %v", err)
 	}
+
+	// Every environment truncates and re-seeds the one test database, so two
+	// running at once would pull the fixtures out from under each other. Go
+	// runs packages in parallel by default, which makes that easy to trip into
+	// — a suite that fails only when something else is running is worse than
+	// no suite. A session-level advisory lock serialises them across processes.
+	lock, err := sql.Open("pgx", DSN())
+	if err != nil {
+		t.Fatalf("open lock connection: %v", err)
+	}
+	lockConn, err := lock.Conn(ctx)
+	if err != nil {
+		t.Fatalf("acquire lock connection: %v", err)
+	}
+	if _, err := lockConn.ExecContext(ctx, `SELECT pg_advisory_lock($1)`, testEnvLockID); err != nil {
+		t.Fatalf("acquire test lock: %v", err)
+	}
+	t.Cleanup(func() {
+		_, _ = lockConn.ExecContext(context.Background(), `SELECT pg_advisory_unlock($1)`, testEnvLockID)
+		_ = lockConn.Close()
+		_ = lock.Close()
+	})
+
 	if _, err := migrate.Up(ctx, conn, nil); err != nil {
 		t.Fatalf("migrate: %v", err)
 	}

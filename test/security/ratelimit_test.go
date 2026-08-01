@@ -3,7 +3,6 @@
 package security_test
 
 import (
-	"fmt"
 	"net/http"
 	"testing"
 	"time"
@@ -127,5 +126,4 @@ func TestUnpaidOrderCapLimitsSquatting_BR_2_3_15(t *testing.T) {
 	if third.Code() != "UNPAID_LIMIT_REACHED" {
 		t.Fatalf("code %q, want UNPAID_LIMIT_REACHED", third.Code())
 	}
-	fmt.Sprint(third)
 }
