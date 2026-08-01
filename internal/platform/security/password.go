@@ -28,7 +28,7 @@ const (
 )
 
 var (
-	ErrInvalidHash    = errors.New("security: invalid password hash format")
+	ErrInvalidHash      = errors.New("security: invalid password hash format")
 	ErrPasswordTooShort = fmt.Errorf("security: password must be at least %d characters", MinPasswordLength)
 	ErrPasswordBreached = errors.New("security: password appears in a known breach list")
 	ErrPasswordTrivial  = errors.New("security: password is too predictable")

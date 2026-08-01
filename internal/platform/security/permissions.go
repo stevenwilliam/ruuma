@@ -31,12 +31,12 @@ const (
 	PermProfileManage      Permission = "profile.manage"
 
 	// Store-scoped operations
-	PermOrderViewStore     Permission = "order.view.store"
-	PermOrderCancelStaff   Permission = "order.cancel.staff"
-	PermOrderStatusKitchen Permission = "order.status.kitchen"  // IN_KITCHEN, READY
+	PermOrderViewStore      Permission = "order.view.store"
+	PermOrderCancelStaff    Permission = "order.cancel.staff"
+	PermOrderStatusKitchen  Permission = "order.status.kitchen"  // IN_KITCHEN, READY
 	PermOrderStatusHandover Permission = "order.status.handover" // PICKED_UP
-	PermKitchenBoard       Permission = "kitchen.board"
-	PermTicketPrint        Permission = "kitchen.ticket.print"
+	PermKitchenBoard        Permission = "kitchen.board"
+	PermTicketPrint         Permission = "kitchen.ticket.print"
 
 	// Finance
 	PermPaymentQueueView Permission = "payment.queue.view"

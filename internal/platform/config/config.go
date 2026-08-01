@@ -44,11 +44,11 @@ type Database struct {
 }
 
 type Auth struct {
-	SigningKey   string
-	PreviousKey  string
-	Issuer       string
-	Google       OAuthProvider
-	Instagram    OAuthProvider
+	SigningKey  string
+	PreviousKey string
+	Issuer      string
+	Google      OAuthProvider
+	Instagram   OAuthProvider
 }
 
 type OAuthProvider struct {

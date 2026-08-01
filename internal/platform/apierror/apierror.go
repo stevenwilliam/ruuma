@@ -18,13 +18,13 @@ type Code string
 
 const (
 	// Generic
-	CodeValidation         Code = "VALIDATION_FAILED"
-	CodeUnauthenticated    Code = "UNAUTHENTICATED"
-	CodeForbidden          Code = "FORBIDDEN"
-	CodeNotFound           Code = "NOT_FOUND"
-	CodeConflict           Code = "CONFLICT"
-	CodeRateLimited        Code = "RATE_LIMITED"
-	CodeInternal           Code = "INTERNAL"
+	CodeValidation          Code = "VALIDATION_FAILED"
+	CodeUnauthenticated     Code = "UNAUTHENTICATED"
+	CodeForbidden           Code = "FORBIDDEN"
+	CodeNotFound            Code = "NOT_FOUND"
+	CodeConflict            Code = "CONFLICT"
+	CodeRateLimited         Code = "RATE_LIMITED"
+	CodeInternal            Code = "INTERNAL"
 	CodeIdempotencyMismatch Code = "IDEMPOTENCY_MISMATCH"
 
 	// Store & scope (BR-2.1.x, BR-2.7.8)
@@ -52,12 +52,12 @@ const (
 	CodePromoExhausted Code = "PROMO_EXHAUSTED"
 
 	// Orders & payments (BR-2.4.x, BR-2.6.x)
-	CodeIllegalTransition       Code = "ILLEGAL_TRANSITION"
-	CodeUnpaidLimitReached      Code = "UNPAID_LIMIT_REACHED"
-	CodePaymentAlreadyVerified  Code = "PAYMENT_ALREADY_VERIFIED"
+	CodeIllegalTransition         Code = "ILLEGAL_TRANSITION"
+	CodeUnpaidLimitReached        Code = "UNPAID_LIMIT_REACHED"
+	CodePaymentAlreadyVerified    Code = "PAYMENT_ALREADY_VERIFIED"
 	CodeSelfVerificationForbidden Code = "SELF_VERIFICATION_FORBIDDEN"
-	CodeRejectionReasonRequired Code = "REJECTION_REASON_REQUIRED"
-	CodeProofRequired           Code = "PROOF_REQUIRED"
+	CodeRejectionReasonRequired   Code = "REJECTION_REASON_REQUIRED"
+	CodeProofRequired             Code = "PROOF_REQUIRED"
 
 	// Identity (BR-2.7.x)
 	CodePhoneVerificationRequired Code = "PHONE_VERIFICATION_REQUIRED"
@@ -113,13 +113,15 @@ func New(status int, code Code, message string) *Error {
 
 // Constructors for the statuses in docs/04 §2.
 
-func BadRequest(code Code, msg string) *Error   { return New(http.StatusBadRequest, code, msg) }
-func Unauthorized(msg string) *Error            { return New(http.StatusUnauthorized, CodeUnauthenticated, msg) }
-func Forbidden(code Code, msg string) *Error    { return New(http.StatusForbidden, code, msg) }
-func NotFound(msg string) *Error                { return New(http.StatusNotFound, CodeNotFound, msg) }
-func Conflict(code Code, msg string) *Error     { return New(http.StatusConflict, code, msg) }
-func Unprocessable(code Code, msg string) *Error { return New(http.StatusUnprocessableEntity, code, msg) }
-func TooManyRequests(msg string) *Error         { return New(http.StatusTooManyRequests, CodeRateLimited, msg) }
+func BadRequest(code Code, msg string) *Error { return New(http.StatusBadRequest, code, msg) }
+func Unauthorized(msg string) *Error          { return New(http.StatusUnauthorized, CodeUnauthenticated, msg) }
+func Forbidden(code Code, msg string) *Error  { return New(http.StatusForbidden, code, msg) }
+func NotFound(msg string) *Error              { return New(http.StatusNotFound, CodeNotFound, msg) }
+func Conflict(code Code, msg string) *Error   { return New(http.StatusConflict, code, msg) }
+func Unprocessable(code Code, msg string) *Error {
+	return New(http.StatusUnprocessableEntity, code, msg)
+}
+func TooManyRequests(msg string) *Error { return New(http.StatusTooManyRequests, CodeRateLimited, msg) }
 
 // Internal wraps an unexpected error. The cause is logged; the client sees a
 // generic message (docs/12, A05).
