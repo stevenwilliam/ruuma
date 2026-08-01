@@ -752,7 +752,7 @@ func (p *NotifyPort) Queue(ctx context.Context, n ports.QueuedNotification) erro
 	return p.repo.Queue(ctx, &Notification{
 		OrderID: n.OrderID, CustomerID: n.CustomerID, Channel: n.Channel,
 		Provider: n.Provider, Event: n.Event, Target: n.Target,
-		TemplateKey: n.TemplateKey, Language: n.Language,
+		TemplateKey: n.TemplateKey, Language: n.Language, Body: n.Body,
 	})
 }
 

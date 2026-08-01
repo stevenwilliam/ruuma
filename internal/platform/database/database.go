@@ -97,11 +97,13 @@ func InTx(ctx context.Context, db *gorm.DB, fn func(tx *gorm.DB) error) error {
 
 type slogWriter struct{ log *slog.Logger }
 
+// Printf receives gorm's SQL trace. It logs at debug so a development run does
+// not drown in statements; slow queries are surfaced by gorm's own threshold.
 func (w slogWriter) Printf(format string, args ...any) {
 	if w.log == nil {
 		return
 	}
-	w.log.Warn(fmt.Sprintf(format, args...))
+	w.log.Debug(fmt.Sprintf(format, args...))
 }
 
 func orDefault(v, def int) int {

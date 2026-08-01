@@ -625,6 +625,7 @@ type Notification struct {
 	Target        string
 	TemplateKey   string
 	Language      string
+	Body          string
 	Status        string
 	Attempts      int
 	LastError     *string
