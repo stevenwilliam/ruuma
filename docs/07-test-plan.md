@@ -49,14 +49,16 @@ Commands: `make test` (unit), `make test-integration` (drops/recreates
 - Item-level constraints (weekend-only, `min_lead_minutes`) narrow the bookable
   set for a cart containing that item.
 - Store timezone: a slot at 12:00 Jakarta is stored as 05:00Z and reads back as
-  12:00 regardless of server TZ (test runs with `TZ=UTC` and `TZ=America/New_York`).
+  12:00 (`TestTimezoneIsExplicit_BR_1_3_2`). Run under a different server
+  timezone by hand — `TZ=America/New_York go test ./internal/domain/schedule/`
+  — which passes; that variation is **not** yet part of CI.
 
 ### 2.3 Capacity and concurrency (BR-2.3.7–12) — the flagship test
 
 - Two axes independently exhaust a slot (`max_orders`, `max_kitchen_units`).
 - **Concurrency:** 20 goroutines check out simultaneously against a slot with
-  capacity 1 → exactly one 2xx, nineteen 409 `SLOT_FULL`, and
-  `reserved_orders = 1`. Repeated 50 times.
+  capacity 1 → exactly one 2xx, nineteen refusals, and `reserved_orders = 1`.
+  Repeated over **10 rounds**, each with a fresh environment.
 - Direct `UPDATE slots SET reserved_orders = max_orders + 1` is rejected by the
   CHECK constraint — the database refuses an oversell on its own.
 - Cancellation releases capacity exactly once; a double cancel does not
@@ -93,10 +95,12 @@ Commands: `make test` (unit), `make test-integration` (drops/recreates
   four sign-in methods.
 - Identity linking: an **unverified** matching email does not link to an existing
   customer; a verified one does.
-- OTP: hashed at rest, single-use, expiry, attempt cap; wrong/expired/used/
-  over-attempted responses are byte-identical.
-- Deny-by-default: a handler registered without a permission declaration fails a
-  routing test at startup.
+- OTP: hashed at rest, single-use, expiry, attempt cap; the service returns one
+  message for every failure mode.
+- Deny-by-default: an anonymous caller is refused on every protected route
+  (`TestUnauthenticatedIsDenied_BR_2_7_6`). A startup assertion that every
+  registered route declares a permission is **not** implemented — the matrix
+  test covers the routes that exist.
 - Negative authz matrix: for every role × every protected action, the denied
   cells in `02` §3 return 403 (or 404 where existence must not leak).
 - IDOR: customer A cannot read, cancel or upload proof for customer B's order —
@@ -120,7 +124,9 @@ Commands: `make test` (unit), `make test-integration` (drops/recreates
 - Window, minimum spend, category restriction and **store scope** each reject
   with their own reason.
 - Percent with `max_discount` cap; fixed capped at subtotal; never negative.
-- Total and per-customer caps hold under concurrent redemption.
+- Total and per-customer caps are enforced transactionally at order creation;
+  the **concurrent** redemption case is covered by the same `FOR UPDATE`
+  transaction as the slot but has no dedicated test yet.
 - Cancel/refund releases the redemption and restores the cap.
 
 ### 2.9 Operations (BR-2.8.x)
@@ -134,24 +140,32 @@ Commands: `make test` (unit), `make test-integration` (drops/recreates
 
 - Every parameter in the BR-2.9.1 table resolves store → group → fallback.
 - Changing a parameter changes behaviour with no restart, and is audited with
-  before/after.
-- No hard-coded scheduling or pricing constant: a test greps the codebase for
-  numeric literals in the forbidden set outside `sys_parameters` defaults.
+  before/after (`TestParameterChangeAppliesWithoutRestart_BR_2_9_2`, and the
+  tax-rate change in the e2e journey).
+- Rate limits are `sys_parameters` values read at boot, not compiled constants.
+- A grep-based check for stray numeric constants is **not** implemented; the
+  compiled fallbacks in `platform`/`postgres` are the only numbers, and they
+  exist so a deleted row cannot take the service down (BR-1.4.4).
 
 ### 2.11 Search and lists (BR-1.5.1)
 
-- Every list endpoint accepts `q` and filters.
-- A frontend test asserts every list/table screen renders a search input — the
-  test enumerates routes, so a new list without search fails CI.
+- Every list endpoint accepts `q` and filters (fuzzed in
+  `test/security/injection_test.go`).
+- A frontend test enumerates the list screens and asserts each renders a
+  search box, so a new list without one fails CI
+  (`web/src/__tests__/search-box.test.tsx`).
 
 ## 3. Security test suite
 
-Detailed in `12-security.md` §5; summarised here as required artefacts:
-negative authz per role, IDOR per resource, rate-limit tests on login/OTP/
-tracking/promo, injection fuzz over every string input, the slot concurrency
-test, cross-store tests per staff role, payment privilege tests, JWT
-tamper/expiry tests, upload tests (magic bytes, oversize, SVG/HTML disguised as
-image), and a header/CSP assertion test.
+Built and passing (`12-security.md` §6): negative authz per role, IDOR per
+resource, rate limits on login and OTP, injection fuzz over every search box,
+body and path, the slot concurrency test, cross-store tests per staff role,
+payment privilege tests, JWT tampering and expiry, append-only enforcement, and
+header/CSP assertions.
+
+**Not built:** upload tests (magic bytes, oversize, disguised types) — the
+suites use an in-memory storage stand-in, so that path is exercised by hand.
+`12-security.md` §7 lists this and the other gaps.
 
 ## 4. Data and fixtures
 
@@ -172,7 +186,7 @@ image), and a header/CSP assertion test.
 
 ## 5. QA checklist before release
 
-- [ ] `make check` clean (vet, staticcheck, gosec, govulncheck, npm audit)
+- [ ] `make check` clean (vet, staticcheck, gosec, govulncheck, npm gate)
 - [ ] `make test`, `make test-integration`, `make test-e2e`, `make test-security` green
 - [ ] Migrations up → down → up on a fresh database
 - [ ] BR coverage check passes (every rule referenced)
