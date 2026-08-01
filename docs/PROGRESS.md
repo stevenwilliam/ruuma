@@ -20,7 +20,6 @@ _Last updated: 2026-08-02 (build complete through step 4: docs, service, fronten
 - ✅ Auth, payment-reject, auto-cancel-phasing, same-day blackout and notification scope settled (D24–D28)
 - ✅ `docs/99-steven-preference.md` — portable engineering DNA (working style, stack, DB, security, doc-set convention, bootstrap checklist) (D29)
 - 🟡 Open questions in `00` — Q1–Q6 closed; Q7 (real store data), Q8 (Google/Instagram OAuth credentials), Q9 (production SMTP) remain, all non-blocking with defaults
-- ⬜ Rewrite docs `01`–`10` + new `12-security.md` from the confirmed scope (step 2 of workflow)
 
 ## M1 — Documents (step 3 of the workflow)
 - ✅ `01` PRD, `02` business rules (115 normative `BR-x.y`), `03` data model, `04` API spec

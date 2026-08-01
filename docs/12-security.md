@@ -32,30 +32,30 @@ service, brute-forcing OTPs or promo codes, and getting a stored file to execute
 
 | Control | Implementation | Test |
 |---|---|---|
-| Deny-by-default authorization | `platform/security` middleware; every route declares a permission; a route without one fails a startup assertion | `test/security/authz_default_test.go` |
-| Store scope as a tenancy boundary | `scope.Stores` threaded into **every** store-scoped repository method; queries carry `store_id = ANY($scope)` (BR-2.7.8) | `test/security/cross_store_test.go` — per role, per resource |
+| Deny-by-default authorization | `platform/security` middleware; every route declares a permission; a route without one fails a startup assertion | `test/security/authz_test.go` (`TestUnauthenticatedIsDenied_BR_2_7_6`) |
+| Store scope as a tenancy boundary | `scope.Stores` threaded into **every** store-scoped repository method; queries carry `store_id = ANY($scope)` (BR-2.7.8) | `test/security/authz_test.go` (`TestCrossStoreAccessRefused_BR_2_7_8`) — per role, per resource |
 | No IDOR | Object reads are filtered by owner **and** store; another customer's order is **404**, not 403 | `test/security/idor_test.go` — per resource |
-| Admin surface separated | Separate gin router group + separate host (`admin.ruuma.id`) | `adapter/http/router_test.go` |
+| Admin surface separated | Separate gin router group + separate host (`admin.ruuma.id`) | `test/security/authz_test.go` (`TestRolePermissionMatrix_BR_2_7_6`) |
 | Payment privilege | finance only, in scope only, never own order (BR-2.6.5/6) | `test/security/payment_privilege_test.go` |
-| CORS | Explicit allow-list from `CORS_ALLOWED_ORIGINS`; credentials only for known origins; no wildcard | `adapter/http/middleware/cors_test.go` |
+| CORS | Explicit allow-list from `CORS_ALLOWED_ORIGINS`; credentials only for known origins; no wildcard | `test/security/headers_test.go` (`TestCORSAllowList_docs12_A01`) |
 
 ### A02 Cryptographic failures
 
 | Control | Implementation | Test |
 |---|---|---|
-| Password hashing | argon2id, tuned (64 MB, t=3, p=2), per-password salt | `platform/security/password_test.go` |
+| Password hashing | argon2id, tuned (64 MB, t=3, p=2), per-password salt | `internal/platform/security/security_test.go` (`TestArgon2idHashing`) |
 | Token design | 15-min access JWT; refresh token **rotating**, stored hashed, revocable; `jti` denylist on logout; new tokens on privilege change | `test/security/jwt_test.go` |
-| OTP | 6 digits CSPRNG, hashed at rest, single-use, 5-min TTL, attempt-capped | `domain/identity/otp_test.go` |
+| OTP | 6 digits CSPRNG, hashed at rest, single-use, 5-min TTL, attempt-capped | `internal/domain/identity/identity_test.go` (`TestOTPLifecycle_BR_2_7_5`) |
 | TLS | TLS 1.2+ only, HSTS (`includeSubDomains; preload`) at nginx | deployment checklist + `testssl` run |
-| Secrets | env only; `.env` git-ignored; `is_secret` parameters masked in UI and logs; documented rotation (`09` §3) | `platform/config/redaction_test.go` |
-| No PII in logs/URLs | Logging filter redacts phone, email, address, proof keys; ids in paths, never personal data | `platform/logging/redact_test.go` |
+| Secrets | env only; `.env` git-ignored; `is_secret` parameters masked in UI and logs; documented rotation (`09` §3) | `internal/platform/config` `Redacted()`; masking asserted in `docs/12` §7 as manual |
+| No PII in logs/URLs | Logging filter redacts phone, email, address, proof keys; ids in paths, never personal data | `internal/platform/logging` redacting handler (no automated test yet — §7) |
 
 ### A03 Injection
 
 | Control | Implementation | Test |
 |---|---|---|
-| SQL | gorm parameter binding; raw SQL only with placeholders; **no string concatenation** anywhere near a query | `test/security/injection_fuzz_test.go` (fuzz over every string input) |
-| Input validation | Allow-list binding + validator tags at the adapter edge; the domain assumes valid input | handler table tests |
+| SQL | gorm parameter binding; raw SQL only with placeholders; **no string concatenation** anywhere near a query | `test/security/injection_test.go` (fuzz over every search box, body and path) |
+| Input validation | Allow-list binding + validator tags at the adapter edge; the domain assumes valid input | `test/security/injection_test.go` (`TestBodyFieldsAreValidated_docs12_A03`) |
 | Output encoding | React escapes by default; **`dangerouslySetInnerHTML` is banned** by an ESLint rule | `web` lint rule + CI |
 | No shell-outs | No `os/exec` in the codebase | grep assertion in `make check` |
 
@@ -63,11 +63,11 @@ service, brute-forcing OTPs or promo codes, and getting a stored file to execute
 
 | Abuse case | Control | Test |
 |---|---|---|
-| Slot squatting | `orders.max_unpaid_per_customer` cap, ageing list, staff bulk cancel (BR-2.3.15, D25) | `test/security/slot_squat_test.go` |
-| Slot oversell (race) | `FOR UPDATE` + CHECK constraints (BR-2.3.8/9) | `test/security/slot_concurrency_test.go` |
+| Slot squatting | `orders.max_unpaid_per_customer` cap, ageing list, staff bulk cancel (BR-2.3.15, D25) | `test/security/ratelimit_test.go` (`TestUnpaidOrderCapLimitsSquatting_BR_2_3_15`) |
+| Slot oversell (race) | `FOR UPDATE` + CHECK constraints (BR-2.3.8/9) | `test/integration/slot_concurrency_test.go` |
 | OTP flooding | 3/10 min per phone, 10/hour per IP, attempt cap, generic responses | `test/security/ratelimit_test.go` |
-| Promo brute force | 10/min per identifier, generic failure reasons, usage caps enforced transactionally | `test/security/promo_bruteforce_test.go` |
-| Order enumeration | 8-char Crockford code from CSPRNG, tracking requires an authenticated owner, rate-limited (BR-2.7.11) | `test/security/order_enum_test.go` |
+| Promo brute force | 10/min per identifier, generic failure reasons, usage caps enforced transactionally | `test/security/ratelimit_test.go` + `internal/domain/pricing/pricing_test.go` |
+| Order enumeration | 8-char Crockford code from CSPRNG, tracking requires an authenticated owner, rate-limited (BR-2.7.11) | `test/security/idor_test.go` (`track by code`) |
 | Menu scraping | Rate limit + cursor pagination caps; menu is public by design | `ratelimit_test.go` |
 | Fake payment verification | finance-only, scope-checked, no self-verify, all events immutable | `payment_privilege_test.go` |
 
@@ -75,12 +75,12 @@ service, brute-forcing OTPs or promo codes, and getting a stored file to execute
 
 | Control | Implementation | Test |
 |---|---|---|
-| Security headers | CSP without `unsafe-inline` (hashed/nonce'd), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` + `frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` minimal | `middleware/headers_test.go` |
-| Debug surfaces off | no pprof in production; gin release mode; `/metrics` bound to `127.0.0.1` | `router_test.go` + deployment check |
-| Least-privilege DB | `ruuma_app` has no `CREATE`; append-only tables are `INSERT`-only (BR-2.10.2) | `migrations` + `test/security/append_only_test.go` |
-| Private object storage | MinIO bucket private; presigned URLs only; generated object names | `adapter/storage/presign_test.go` |
-| No default admin | First-run setup flow creates the first owner; no seeded production credential | `cmd/api` setup test |
-| Errors leak nothing | Single error model; driver errors mapped in `platform/apierror`; stack traces never serialised | `apierror/mapping_test.go` |
+| Security headers | CSP without `unsafe-inline` (hashed/nonce'd), `X-Content-Type-Options: nosniff`, `X-Frame-Options: DENY` + `frame-ancestors 'none'`, `Referrer-Policy: strict-origin-when-cross-origin`, `Permissions-Policy` minimal | `test/security/headers_test.go` |
+| Debug surfaces off | no pprof in production; gin release mode; `/metrics` bound to `127.0.0.1` | deployment checklist (`14`) — not automated (§7) |
+| Least-privilege DB | `ruuma_app` has no `CREATE`; append-only tables are `INSERT`-only (BR-2.10.2) | `test/security/append_only_test.go` |
+| Private object storage | MinIO bucket private; presigned URLs only; generated object names | manual — the suites use an in-memory stand-in (§7) |
+| No default admin | First-run setup flow creates the first owner; no seeded production credential | `cmd/api seed` refuses to run in production; no compiled credential |
+| Errors leak nothing | Single error model; driver errors mapped in `platform/apierror`; stack traces never serialised | `test/security/headers_test.go` (`TestErrorsDoNotLeakInternals_docs12_A05`) |
 
 ### A06 Vulnerable and outdated components
 
@@ -94,11 +94,11 @@ advisories acted on within 7 days, Go minor upgrades within 30 days of release.
 | Control | Implementation | Test |
 |---|---|---|
 | Rate limiting | Per identifier **and** per IP on login, staff login, OTP request/verify, tracking, promo (`04` §9) | `ratelimit_test.go` |
-| Progressive lockout | `failed_attempts` + `locked_until` with exponential backoff; documented unlock path (admin action, audited) | `authsvc/lockout_test.go` |
+| Progressive lockout | `failed_attempts` + `locked_until` with exponential backoff; documented unlock path (admin action, audited) | `internal/app/authsvc` lockout path — asserted by hand (§7) |
 | No session fixation | New access + refresh on any privilege change; old `jti` revoked | `jwt_test.go` |
-| Generic auth errors | Login, OTP and reset responses never reveal account existence | `authsvc/enumeration_test.go` |
-| Password policy | Minimum length 12, breach-list (k-anonymity local list) check, no composition theatre | `password_policy_test.go` |
-| Identity linking | Links only on a **verified** matching email or phone (BR-2.7.3) | `identity/link_test.go` |
+| Generic auth errors | Login, OTP and reset responses never reveal account existence | `test/security/ratelimit_test.go` (identical responses on failed login) |
+| Password policy | Minimum length 12, breach-list (k-anonymity local list) check, no composition theatre | `internal/platform/security/security_test.go` (`TestPasswordPolicy`) |
+| Identity linking | Links only on a **verified** matching email or phone (BR-2.7.3) | `internal/domain/identity/identity_test.go` (`TestIdentityLinking_BR_2_7_3`) |
 
 ### A08 Software and data integrity failures
 
@@ -106,7 +106,8 @@ advisories acted on within 7 days, Go minor upgrades within 30 days of release.
 - Migrations are reviewed, numbered and forward-only; `.down.sql` tested in CI.
 - The phase-2 payment webhook verifies an **HMAC signature** and a timestamp
   inside a 5-minute window, rejects replays by event id, and is idempotent —
-  built and tested now so phase 3 needs no new plumbing (`04` §10).
+  written now so phase 3 needs no new plumbing (`04` §10). It is **not yet
+  tested** — see §7.
 - No third-party script tags; fonts and assets are self-hosted (so CSP needs no
   external origins).
 
