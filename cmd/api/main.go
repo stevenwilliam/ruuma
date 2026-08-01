@@ -37,11 +37,13 @@ func usage() {
 usage: ruuma <command> [flags]
 
 commands:
-  serve      run the HTTP API
-  worker     run background jobs (slot materialisation, notifications)
-  migrate    apply migrations   (--down N | --down all | --status)
-  seed       load demo data (never run against production)
-  version    print version and commit
+  serve         run the HTTP API
+  worker        run background jobs (slot materialisation, notifications)
+  migrate       apply migrations (--down N | --down all | --status)
+  seed          load demo data (never runs against production)
+  create-owner  create the first owner account on a fresh database
+                (--email, --name, --password; omit --password to generate one)
+  version       print version and commit
 `)
 }
 
@@ -71,6 +73,8 @@ func run() error {
 		return runMigrate(ctx, cfg, log)
 	case "seed":
 		return runSeed(ctx, cfg, log)
+	case "create-owner":
+		return runCreateOwner(ctx, cfg, log)
 	case "serve":
 		return runServe(ctx, cfg, log)
 	case "worker":
