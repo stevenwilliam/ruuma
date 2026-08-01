@@ -1,0 +1,95 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+env:
+  GO_VERSION: "1.26"
+  NODE_VERSION: "20"
+
+jobs:
+  go:
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:18
+        env:
+          POSTGRES_USER: ruuma
+          POSTGRES_PASSWORD: ruuma
+          POSTGRES_DB: ruuma_test
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd "pg_isready -U ruuma"
+          --health-interval 10s --health-timeout 5s --health-retries 5
+    env:
+      TEST_DATABASE_URL: postgres://ruuma:ruuma@127.0.0.1:5432/ruuma_test?sslmode=disable
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+
+      - name: vet
+        run: go vet ./...
+
+      - name: unit tests
+        run: go test -race -count=1 ./...
+
+      - name: migrations up → down → up
+        run: |
+          go run ./cmd/api migrate
+          go run ./cmd/api migrate --down all
+          go run ./cmd/api migrate
+
+      - name: integration tests
+        run: go test -race -count=1 -tags=integration ./internal/adapter/... ./test/integration/...
+
+      - name: security tests
+        run: go test -count=1 -tags=security ./test/security/...
+
+      - name: e2e tests
+        run: go test -count=1 -tags=e2e ./test/e2e/...
+
+      - name: BR coverage (every rule referenced by a test)
+        run: bash scripts/br-coverage.sh
+
+      - name: no shell-outs (docs/12 A03)
+        run: "! grep -rn --include=*.go -E '\"os/exec\"' ./cmd ./internal"
+
+  quality:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-go@v5
+        with:
+          go-version: ${{ env.GO_VERSION }}
+          cache: true
+      - name: staticcheck
+        run: go run honnef.co/go/tools/cmd/staticcheck@latest ./...
+      - name: gosec
+        run: go run github.com/securego/gosec/v2/cmd/gosec@latest -quiet -exclude-dir=web ./...
+      - name: govulncheck
+        run: go run golang.org/x/vuln/cmd/govulncheck@latest ./...
+
+  web:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: web
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ env.NODE_VERSION }}
+          cache: npm
+          cache-dependency-path: web/package-lock.json
+      - run: npm ci
+      - run: npm run lint
+      - run: npm run typecheck
+      - run: npm run test -- --run
+      - run: npm run build
+      - run: npm audit --audit-level=high
+        continue-on-error: true

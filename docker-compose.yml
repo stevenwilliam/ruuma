@@ -1,0 +1,42 @@
+# ruuma — development satellites only.
+#
+# Deliberately NOT here (D10, docs/11):
+#   * PostgreSQL — runs natively on this server, shared, database `ruuma`.
+#   * WAHA       — one shared container serves every project on `claudedev`.
+# Running a second Postgres would fork the data; a second WAHA would fight over
+# the WhatsApp session.
+
+services:
+  minio:
+    image: minio/minio:latest
+    container_name: ruuma-minio
+    restart: unless-stopped
+    command: server /data --console-address ":9003"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ACCESS_KEY:-ruuma-dev}
+      MINIO_ROOT_PASSWORD: ${MINIO_SECRET_KEY:-ruuma-dev-secret}
+    ports:
+      - "127.0.0.1:9002:9000"   # API   (shifted off 9000 — shared server)
+      - "127.0.0.1:9003:9003"   # console
+    volumes:
+      - ruuma_minio:/data
+    healthcheck:
+      test: ["CMD", "mc", "ready", "local"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  mailpit:
+    image: axllent/mailpit:latest
+    container_name: ruuma-mailpit
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:1025:1025"   # SMTP
+      - "127.0.0.1:8025:8025"   # web UI
+    environment:
+      MP_MAX_MESSAGES: 500
+      MP_SMTP_AUTH_ACCEPT_ANY: 1
+      MP_SMTP_AUTH_ALLOW_INSECURE: 1
+
+volumes:
+  ruuma_minio:
