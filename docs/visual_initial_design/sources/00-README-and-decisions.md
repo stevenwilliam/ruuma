@@ -35,10 +35,6 @@ document, it wins. Build/working conventions live in `../CLAUDE.md`.
 
 Plus `PROGRESS.md` (live build status) and `RUN-WHEN-BACK.md` (interactive steps).
 
-`visual_initial_design/` is a drop-in package for the initial visual-design pass:
-a merged, self-contained brief (`00-design-brief.md`) plus verbatim snapshots of
-its source docs in `sources/`. The originals in `docs/` stay canonical.
-
 ---
 
 ## 2. Decision log

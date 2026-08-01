@@ -14,8 +14,9 @@ _Last updated: 2026-07-31 (scaffold + stack decision + dev-server handbook)._
 - ✅ Delivery workflow agreed (D5, `CLAUDE.md §9`)
 - ✅ `13a-development-server-preparation.md` — shared `claudedev` server (Part A setup once + Part B onboard-a-project); ruuma is the worked example (D6)
 - ✅ WhatsApp notify via **WAHA** (self-hosted, free); Meta Cloud API is the documented official alternative (D7)
+- ✅ `visual_initial_design/` — merged design brief + source snapshots, ready to drop into a design tool
 - ⬜ Product-definition discussion → fill 01/02/03 (step 2 of workflow)
-- ⬜ Resolve open questions in `00`
+- ⬜ Resolve open questions in `00` (Q3 "UI or API-only?" blocks all visual design)
 
 ## M1 — Foundation
 - ⬜ Module, CI, `.env.example`, docker-compose, Makefile, Dockerfile
