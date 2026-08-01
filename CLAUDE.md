@@ -12,11 +12,19 @@ document wins — this file governs *how* we build, not *what* the product does.
 **Codename:** ruuma
 **Owner:** stevenwilliam (itdept.sfg@gmail.com)
 **Repo:** https://github.com/stevenwilliam/ruuma
-**Status:** greenfield — product not yet defined.
+**Status:** domain defined (2026-08-02, decision D8) — docs A–Z in progress.
 
-> TODO(domain): one-paragraph problem statement goes here once decided. Until
-> then, the domain docs (`01`, `02`, `03`, `06`) are structured placeholders.
-> See `initial-start-prompt.md` for how to run that first discussion.
+ruuma is the **online ordering site for a multi-outlet restaurant group**
+serving Indonesian, Chinese and Western food. A customer picks a **store**,
+browses that store's menu, builds a cart, and checks out against a **fulfilment
+date and time slot** at that store; the store's kitchen works a slot-by-slot
+production board so it knows exactly what to cook and when. Phase 1 is **pickup
+only** (delivery is phase 2, D16) and payment is **manual bank transfer**
+verified by finance behind a provider interface (D11, D13). Every order, slot,
+price override, promo and staff assignment is **scoped to exactly one store** —
+store scope is a tenancy boundary, enforced in the repository layer.
+
+See `docs/00-README-and-decisions.md` §2 for the full decision log (D8–D23).
 
 ---
 
@@ -100,6 +108,11 @@ math (see §4).
 
 ## 6. Working conventions (how I want Claude to operate)
 
+- **Owner is Steven, nickname "ven".** When he answers a quoted list of
+  questions, a line beginning `ven:` is his answer to the question above it.
+- **Update the related documents on every interaction** — including talk-only
+  turns that settle a decision, not just code changes. A decision that isn't in
+  the docs didn't happen (see §8).
 - **Editor is `vi`** in any runbook, shell instruction, or docs example — never
   `nano`.
 - **Auto-commit + push after every completed change**, without asking. Small,
@@ -154,5 +167,13 @@ The agreed sequence for taking ruuma from empty repo to shipped:
 
 ## 10. Locale / environment
 
-> TODO(domain): timezone, currency, and language are product decisions. Fill in
-> once the domain is set (SCHOOLCATERING was Asia/Jakarta, IDR, EN/ID).
+- **Currency: IDR**, stored as **whole rupiah in `BIGINT`** — rupiah has no
+  circulating subunit, so BR-1.1.1 is amended accordingly (D9). Integer maths
+  and half-up rounding still apply everywhere.
+- **Timezone: Asia/Jakarta** for all business-day, slot and cutoff logic.
+  Timestamps are stored in UTC; the conversion is always explicit, never
+  server-local (D9).
+- **Languages: ID (default) + EN** in the UI, via message catalogues — no inline
+  strings. The doc set stays in English.
+- **Production domain: `ruuma.id`** (+ `admin.ruuma.id`), single Ubuntu node,
+  nginx + certbot, native PostgreSQL 18, MinIO under systemd (D21).

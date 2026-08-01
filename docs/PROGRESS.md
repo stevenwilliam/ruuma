@@ -2,7 +2,7 @@
 
 Live status. Legend: ✅ done & tested · 🟡 partial · ⬜ not started.
 
-_Last updated: 2026-07-31 (scaffold + stack decision + dev-server handbook)._
+_Last updated: 2026-08-02 (domain defined, D8–D23 recorded, brand locked)._
 
 ## M0 — Definition
 - ✅ Repo created + `git init`, pushed to `origin`
@@ -14,8 +14,11 @@ _Last updated: 2026-07-31 (scaffold + stack decision + dev-server handbook)._
 - ✅ Delivery workflow agreed (D5, `CLAUDE.md §9`)
 - ✅ `13a-development-server-preparation.md` — shared `claudedev` server (Part A setup once + Part B onboard-a-project); ruuma is the worked example (D6)
 - ✅ WhatsApp notify via **WAHA** (self-hosted, free); Meta Cloud API is the documented official alternative (D7)
-- ⬜ Product-definition discussion → fill 01/02/03 (step 2 of workflow)
-- ⬜ Resolve open questions in `00`
+- ✅ Product-definition discussion held; **domain defined (D8)** — multi-outlet restaurant ordering, store-scoped slots
+- ✅ Scope rulings recorded (D9–D23): IDR/Jakarta/ID+EN, no guest checkout, no payment hold or rejection state, pickup-only phase 1, PB1 10%, per-date schedule overrides, WAHA notify with provider port, no PWA, ASVS L2
+- ✅ Brand locked: emerald `#277066` from the supplied logo, contrast-checked light/dark tokens in `10` (D20); logo at `web/public/brand/ruuma-logo-emerald.png`
+- 🟡 Open questions in `00` — Q1–Q4 closed; Q5 (customer login), Q6 (unpaid-order slot squatting control), Q7 (real store data) remain
+- ⬜ Rewrite docs `01`–`10` + new `12-security.md` from the confirmed scope (step 2 of workflow)
 
 ## M1 — Foundation
 - ⬜ Module, CI, `.env.example`, docker-compose, Makefile, Dockerfile
