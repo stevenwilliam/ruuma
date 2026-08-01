@@ -7,6 +7,7 @@ import (
 	"github.com/gin-gonic/gin"
 
 	"github.com/stevenwilliam/ruuma/internal/platform/apierror"
+	"github.com/stevenwilliam/ruuma/internal/platform/logging"
 	"github.com/stevenwilliam/ruuma/internal/platform/security"
 )
 
@@ -41,7 +42,8 @@ func (s *Server) idempotent(endpoint string) gin.HandlerFunc {
 			return
 		}
 		if stored != nil {
-			// Replay the original outcome verbatim.
+			// Replay the original outcome. The payload is semantically the
+			// original one; JSONB storage may reorder its keys.
 			c.Header("Idempotency-Replayed", "true")
 			c.Data(stored.Code, "application/json; charset=utf-8", stored.Body)
 			c.Abort()
@@ -55,8 +57,14 @@ func (s *Server) idempotent(endpoint string) gin.HandlerFunc {
 
 		status := recorder.Status()
 		if status >= 200 && status < 300 {
-			_ = s.Idempotency.Complete(c.Request.Context(), key, subjectType, p.ID, endpoint,
-				status, recorder.buf.Bytes())
+			// A failure to record is not a failure of the action, but it must
+			// be visible: an unrecorded response means the next replay
+			// re-executes a money or capacity operation.
+			if err := s.Idempotency.Complete(c.Request.Context(), key, subjectType, p.ID,
+				endpoint, status, recorder.buf.Bytes()); err != nil {
+				logging.From(c.Request.Context()).Error("idempotency: response not recorded",
+					"endpoint", endpoint, "error", err)
+			}
 			return
 		}
 		// A refusal is not an outcome worth replaying: free the key.

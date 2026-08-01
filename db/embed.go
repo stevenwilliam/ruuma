@@ -23,6 +23,25 @@ type Migration struct {
 	Down    string
 }
 
+// DataMigrations are the migrations that carry reference data rather than
+// schema. A test harness that empties the database has to put these back:
+// TRUNCATE ... CASCADE reaches sys_parameters through its updated_by foreign
+// key, and a service without its parameters silently falls back to compiled
+// defaults with no templates at all.
+func DataMigrations() ([]Migration, error) {
+	all, err := Migrations()
+	if err != nil {
+		return nil, err
+	}
+	var out []Migration
+	for _, m := range all {
+		if strings.Contains(m.Name, "reference_data") || strings.Contains(m.Name, "parameters") {
+			out = append(out, m)
+		}
+	}
+	return out, nil
+}
+
 // Migrations returns every migration ordered by version. A step missing its
 // .down.sql is an error: forward-only in production still means reversible in
 // development and CI (CLAUDE.md §4).

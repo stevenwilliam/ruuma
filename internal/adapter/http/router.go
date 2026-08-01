@@ -35,6 +35,9 @@ type Deps struct {
 	PaymentsRead ports.Payments
 	Signer       *security.TokenSigner
 	Limiter      *ratelimit.Limiter
+	// Limits are resolved from sys_parameters at boot (docs/04 §9). A zero
+	// value falls back to the compiled default in platform/ratelimit.
+	Limits       Limits
 	Idempotency  Idempotency
 	Log          *slog.Logger
 	IsProduction bool
@@ -49,6 +52,38 @@ type Idempotency interface {
 	Begin(ctx context.Context, key, subjectType string, subjectID uuid.UUID, endpoint string, body []byte) (*StoredResponse, error)
 	Complete(ctx context.Context, key, subjectType string, subjectID uuid.UUID, endpoint string, code int, body []byte) error
 	Abandon(ctx context.Context, key, subjectType string, subjectID uuid.UUID, endpoint string) error
+}
+
+// Limits carries the tunable rate-limit rules. They live here rather than as
+// constants because docs/04 §9 makes them operational settings, and an
+// operator retunes them without a deploy (BR-1.4.1).
+type Limits struct {
+	Login       ratelimit.Rule
+	StaffLogin  ratelimit.Rule
+	OTPRequest  ratelimit.Rule
+	OTPVerify   ratelimit.Rule
+	Tracking    ratelimit.Rule
+	OrderCreate ratelimit.Rule
+	MenuRead    ratelimit.Rule
+}
+
+// withDefaults fills any unset rule from the compiled fallbacks.
+func (l Limits) withDefaults() Limits {
+	pick := func(rule, def ratelimit.Rule) ratelimit.Rule {
+		if rule.Burst <= 0 || rule.Window <= 0 {
+			return def
+		}
+		return rule
+	}
+	return Limits{
+		Login:       pick(l.Login, ratelimit.RuleLogin),
+		StaffLogin:  pick(l.StaffLogin, ratelimit.RuleStaffLogin),
+		OTPRequest:  pick(l.OTPRequest, ratelimit.RuleOTPRequest),
+		OTPVerify:   pick(l.OTPVerify, ratelimit.RuleOTPVerify),
+		Tracking:    pick(l.Tracking, ratelimit.RuleTracking),
+		OrderCreate: pick(l.OrderCreate, ratelimit.RuleOrderCreate),
+		MenuRead:    pick(l.MenuRead, ratelimit.RuleMenuRead),
+	}
 }
 
 // StoredResponse is a previously recorded response.
@@ -67,6 +102,7 @@ func New(d Deps) *gin.Engine {
 	if d.IsProduction {
 		gin.SetMode(gin.ReleaseMode)
 	}
+	d.Limits = d.Limits.withDefaults()
 	s := &Server{Deps: d}
 
 	r := gin.New()
@@ -116,7 +152,7 @@ func (s *Server) ready(c *gin.Context) {
 }
 
 func (s *Server) registerPublic(g *gin.RouterGroup) {
-	menuLimit := rateLimit(s.Limiter, "menu", ratelimit.RuleMenuRead, byIP)
+	menuLimit := rateLimit(s.Limiter, "menu", s.Limits.MenuRead, byIP)
 
 	g.GET("/stores", menuLimit, s.listStores)
 	g.GET("/stores/:id", menuLimit, s.getStore)
@@ -125,23 +161,23 @@ func (s *Server) registerPublic(g *gin.RouterGroup) {
 	g.GET("/categories", menuLimit, s.listCategories)
 	g.GET("/availability/dates", menuLimit, s.availableDates)
 	g.GET("/availability/slots", menuLimit, s.availableSlots)
-	g.POST("/cart/quote", rateLimit(s.Limiter, "quote", ratelimit.RuleOrderCreate, bySubject), s.quoteCart)
+	g.POST("/cart/quote", rateLimit(s.Limiter, "quote", s.Limits.OrderCreate, bySubject), s.quoteCart)
 }
 
 func (s *Server) registerAuth(g *gin.RouterGroup) {
 	auth := g.Group("/auth")
-	auth.POST("/register", rateLimit(s.Limiter, "register", ratelimit.RuleLogin, byIP), s.register)
+	auth.POST("/register", rateLimit(s.Limiter, "register", s.Limits.Login, byIP), s.register)
 	auth.GET("/verify-email", s.verifyEmail)
-	auth.POST("/login", captureBody(), rateLimit(s.Limiter, "login", ratelimit.RuleLogin, byEmailBody), s.login)
-	auth.POST("/refresh", rateLimit(s.Limiter, "refresh", ratelimit.RuleLogin, byIP), s.refresh)
+	auth.POST("/login", captureBody(), rateLimit(s.Limiter, "login", s.Limits.Login, byEmailBody), s.login)
+	auth.POST("/refresh", rateLimit(s.Limiter, "refresh", s.Limits.Login, byIP), s.refresh)
 	auth.POST("/logout", requireAuthenticated(), s.logout)
 	auth.POST("/oauth/:provider/start", s.oauthStart)
 	auth.GET("/oauth/:provider/callback", s.oauthCallback)
 
-	g.POST("/otp/request", captureBody(), rateLimit(s.Limiter, "otp_request", ratelimit.RuleOTPRequest, byPhoneBody), s.requestOTP)
-	g.POST("/otp/verify", captureBody(), rateLimit(s.Limiter, "otp_verify", ratelimit.RuleOTPVerify, byPhoneBody), s.verifyOTP)
+	g.POST("/otp/request", captureBody(), rateLimit(s.Limiter, "otp_request", s.Limits.OTPRequest, byPhoneBody), s.requestOTP)
+	g.POST("/otp/verify", captureBody(), rateLimit(s.Limiter, "otp_verify", s.Limits.OTPVerify, byPhoneBody), s.verifyOTP)
 
-	g.POST("/staff/login", captureBody(), rateLimit(s.Limiter, "staff_login", ratelimit.RuleStaffLogin, byEmailBody), s.staffLogin)
+	g.POST("/staff/login", captureBody(), rateLimit(s.Limiter, "staff_login", s.Limits.StaffLogin, byEmailBody), s.staffLogin)
 }
 
 func (s *Server) registerCustomer(g *gin.RouterGroup) {
@@ -151,11 +187,11 @@ func (s *Server) registerCustomer(g *gin.RouterGroup) {
 
 	orders := g.Group("/orders", requireAuthenticated())
 	orders.POST("", requirePermission(security.PermOrderCreate),
-		rateLimit(s.Limiter, "order_create", ratelimit.RuleOrderCreate, bySubject),
+		rateLimit(s.Limiter, "order_create", s.Limits.OrderCreate, bySubject),
 		captureBody(), s.idempotent("orders.create"), s.createOrder)
 	orders.GET("", requirePermission(security.PermOrderViewOwn), s.listOrders)
 	orders.GET("/track", requirePermission(security.PermOrderViewOwn),
-		rateLimit(s.Limiter, "track", ratelimit.RuleTracking, bySubject), s.trackOrder)
+		rateLimit(s.Limiter, "track", s.Limits.Tracking, bySubject), s.trackOrder)
 	orders.GET("/:id", requirePermission(security.PermOrderViewOwn), s.getOrder)
 	orders.POST("/:id/cancel", requirePermission(security.PermOrderCancelOwn), s.cancelOwnOrder)
 	orders.POST("/:id/reorder", requirePermission(security.PermOrderViewOwn), s.reorder)

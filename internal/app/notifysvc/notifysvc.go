@@ -8,12 +8,40 @@ import (
 	"context"
 	"log/slog"
 	"strconv"
+	"strings"
 	"time"
 
 	"github.com/google/uuid"
 
 	"github.com/stevenwilliam/ruuma/internal/app/ports"
 )
+
+// Event names the four automated messages ruuma sends (D28). Payment rejection
+// is deliberately absent: finance and operations handle that by hand.
+type Event string
+
+const (
+	EventOrderReceived   Event = "order_received"
+	EventPaymentVerified Event = "payment_verified"
+	EventOrderReady      Event = "order_ready"
+	EventSlotReminder    Event = "slot_reminder"
+)
+
+// AllEvents lists the automated events, for the admin toggles.
+func AllEvents() []Event {
+	return []Event{EventOrderReceived, EventPaymentVerified, EventOrderReady, EventSlotReminder}
+}
+
+// Render fills {{placeholders}} in a template stored in sys_parameters
+// (BR-2.10.5). An unknown placeholder is left untouched rather than blanked, so
+// a typo in a template is visible instead of silently producing empty text.
+func Render(template string, vars map[string]string) string {
+	out := template
+	for k, v := range vars {
+		out = strings.ReplaceAll(out, "{{"+k+"}}", v)
+	}
+	return out
+}
 
 // Sender is the outbound channel (WAHA, Meta Cloud or the log sink).
 type Sender interface {

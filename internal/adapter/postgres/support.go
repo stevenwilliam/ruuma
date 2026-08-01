@@ -246,14 +246,27 @@ func (r *IdempotencyRepo) Begin(ctx context.Context, key, subjectType string, su
 	}
 }
 
-// Complete stores the response so a replay returns it verbatim.
+// Complete stores the response so a replay returns the same result.
+//
+// The body is stored as JSONB, so a replay is semantically identical rather
+// than byte-identical (Postgres normalises key order). Clients switch on the
+// decoded payload, never on its bytes.
+//
+// The body is written with an explicit ::jsonb cast: passed as bytes it would
+// be sent as bytea and the assignment would fail, which is exactly the silent
+// breakage that makes an "idempotent" endpoint quietly re-execute.
 func (r *IdempotencyRepo) Complete(ctx context.Context, key, subjectType string, subjectID uuid.UUID,
 	endpoint string, code int, body []byte) error {
 
-	return r.db.WithContext(ctx).Model(&IdempotencyKey{}).
-		Where("key = ? AND subject_type = ? AND subject_id = ? AND endpoint = ?",
-			key, subjectType, subjectID, endpoint).
-		Updates(map[string]any{"response_code": code, "response_body": body}).Error
+	payload := string(body)
+	if payload == "" {
+		payload = "null"
+	}
+	return r.db.WithContext(ctx).Exec(`
+		UPDATE idempotency_keys
+		   SET response_code = $1, response_body = $2::jsonb
+		 WHERE key = $3 AND subject_type = $4 AND subject_id = $5 AND endpoint = $6`,
+		code, payload, key, subjectType, subjectID, endpoint).Error
 }
 
 // Abandon drops a claimed key whose request failed, so the caller may retry.

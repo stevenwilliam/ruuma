@@ -8,6 +8,7 @@ import (
 
 	"gorm.io/gorm"
 
+	adapterhttp "github.com/stevenwilliam/ruuma/internal/adapter/http"
 	"github.com/stevenwilliam/ruuma/internal/adapter/mail"
 	"github.com/stevenwilliam/ruuma/internal/adapter/notify"
 	"github.com/stevenwilliam/ruuma/internal/adapter/postgres"
@@ -141,7 +142,7 @@ func build(ctx context.Context, cfg *config.Config, log *slog.Logger) (*app, err
 
 	a.catalogSvc = catalogsvc.New(a.storesPort, cataloguePort, slotsPort, a.params, a.clk)
 	a.orderSvc = ordersvc.New(a.storesPort, cataloguePort, slotsPort, ordersPort,
-		a.paymentsPort, promoPort, a.customerPort, a.params, auditPort, a.clk)
+		a.paymentsPort, promoPort, a.customerPort, a.params, auditPort, notifyPort, a.clk)
 	a.paymentSvc = paymentsvc.New(a.paymentsPort, ordersPort, a.storesPort, storagePort,
 		notifyPort, a.params, auditPort, a.clk)
 	a.opsSvc = opssvc.New(ordersPort, a.storesPort, slotsPort, notifyPort, a.params, auditPort, a.clk)
@@ -195,3 +196,22 @@ func (n notifySender) Send(ctx context.Context, to, body string) error {
 }
 
 var _ = clock.Jakarta
+
+// rateLimits resolves the tunable limits from sys_parameters (docs/04 §9).
+// They are read at boot; changing one takes effect on the next restart, which
+// is stated in the parameter's description so nobody expects otherwise.
+func (a *app) rateLimits(ctx context.Context) adapterhttp.Limits {
+	rule := func(key string, burst int, window time.Duration) ratelimit.Rule {
+		return ratelimit.Rule{Burst: a.params.Int(ctx, nil, key), Window: window}
+	}
+	limits := adapterhttp.Limits{
+		Login:       rule("ratelimit.login_per_minute", 5, time.Minute),
+		StaffLogin:  rule("ratelimit.staff_login_per_minute", 5, time.Minute),
+		OTPRequest:  rule("ratelimit.otp_request_per_10min", 3, 10*time.Minute),
+		OTPVerify:   rule("ratelimit.otp_verify_per_10min", 5, 10*time.Minute),
+		Tracking:    rule("ratelimit.tracking_per_minute", 20, time.Minute),
+		OrderCreate: rule("ratelimit.order_create_per_minute", 10, time.Minute),
+		MenuRead:    rule("ratelimit.menu_read_per_minute", 120, time.Minute),
+	}
+	return limits
+}

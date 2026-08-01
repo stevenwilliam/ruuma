@@ -27,8 +27,9 @@ func runServe(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 		Auth: a.authSvc, Ops: a.opsSvc, Admin: a.adminSvc,
 		Stores: a.storesPort, Staff: a.staffPort, Customers: a.customerPort,
 		PaymentsRead: a.paymentsPort,
-		Signer:       a.signer, Limiter: a.limiter, Idempotency: idempotencyAdapter{a.idem},
-		Log: log, IsProduction: cfg.App.IsProduction(), Origins: cfg.App.AllowedOrigins,
+		Signer:       a.signer, Limiter: a.limiter, Limits: a.rateLimits(ctx),
+		Idempotency: idempotencyAdapter{a.idem},
+		Log:         log, IsProduction: cfg.App.IsProduction(), Origins: cfg.App.AllowedOrigins,
 		Version: version, Commit: commit,
 		Ready: func() error {
 			sqlDB, err := a.db.DB()

@@ -230,7 +230,15 @@ func (r *PaymentRepo) Verify(ctx context.Context, d Decide) (*Payment, error) {
 			}
 		}
 
+		// Reflect what was just written, so the response carries the
+		// verification timestamp rather than the pre-update nil.
 		p.Status = string(dpay.Verified)
+		p.VerifiedAt = &now
+		p.VerifiedBy = &d.ActorID
+		if result.MismatchAmount != 0 {
+			p.MismatchAccepted = true
+			p.MismatchReason = &d.MismatchReason
+		}
 		out = p
 		return nil
 	})

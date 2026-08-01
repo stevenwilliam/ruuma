@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/stevenwilliam/ruuma/internal/app/notifysvc"
 	"github.com/stevenwilliam/ruuma/internal/app/ports"
 	"github.com/stevenwilliam/ruuma/internal/domain/order"
 	"github.com/stevenwilliam/ruuma/internal/platform/apierror"
@@ -18,6 +19,7 @@ import (
 )
 
 type Service struct {
+	composer *notifysvc.Composer
 	orders   ports.Orders
 	stores   ports.Stores
 	slots    ports.Slots
@@ -30,7 +32,8 @@ type Service struct {
 func New(orders ports.Orders, stores ports.Stores, slots ports.Slots, notifier ports.Notifier,
 	params ports.Params, audit ports.Auditor, clk ports.Clock) *Service {
 	return &Service{orders: orders, stores: stores, slots: slots, notifier: notifier,
-		params: params, audit: audit, clock: clk}
+		params: params, audit: audit, clock: clk,
+		composer: notifysvc.NewComposer(params, notifier)}
 }
 
 // SlotGroup is one slot's worth of the board (BR-2.8.1).
@@ -134,12 +137,18 @@ func (s *Service) Advance(ctx context.Context, p security.Principal, orderID uui
 		return err
 	}
 
-	if to == order.Ready && s.params.Bool(ctx, nil, "notify.event.order_ready_enabled") {
-		_ = s.notifier.Queue(ctx, ports.QueuedNotification{
-			OrderID: &o.ID, CustomerID: &o.CustomerID, Channel: "whatsapp",
-			Provider: s.params.String(ctx, nil, "notify.provider"), Event: "order_ready",
-			Target: o.ContactPhone, TemplateKey: "notify.template.order_ready", Language: "id",
-		})
+	if to == order.Ready {
+		store, err := s.stores.Get(ctx, o.StoreID)
+		if err == nil {
+			if err := s.composer.Queue(ctx, notifysvc.EventOrderReady, *o,
+				store.Name, store.AddressLine, notifysvc.Bank{}); err != nil {
+				_ = s.audit.Write(ctx, ports.AuditEntry{
+					ActorType: "system", Action: "notify.queue.failed",
+					EntityType: "order", EntityID: &o.ID, StoreID: &o.StoreID,
+					After: map[string]any{"error": err.Error()},
+				})
+			}
+		}
 	}
 
 	return s.audit.Write(ctx, ports.AuditEntry{

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/stevenwilliam/ruuma/internal/app/notifysvc"
 	"github.com/stevenwilliam/ruuma/internal/app/ports"
 	"github.com/stevenwilliam/ruuma/internal/domain/money"
 	dpay "github.com/stevenwilliam/ruuma/internal/domain/payment"
@@ -16,6 +17,7 @@ import (
 )
 
 type Service struct {
+	composer *notifysvc.Composer
 	payments ports.Payments
 	orders   ports.Orders
 	stores   ports.Stores
@@ -31,6 +33,7 @@ func New(payments ports.Payments, orders ports.Orders, stores ports.Stores, stor
 	return &Service{
 		payments: payments, orders: orders, stores: stores, storage: storage,
 		notifier: notifier, params: params, audit: audit, clock: clk,
+		composer: notifysvc.NewComposer(params, notifier),
 	}
 }
 
@@ -129,7 +132,7 @@ func (s *Service) Verify(ctx context.Context, p security.Principal, paymentID uu
 	})
 
 	// BR-2.10.3: the customer is told their payment cleared.
-	s.queueNotification(ctx, pay.OrderID, "payment_verified")
+	s.queueNotification(ctx, pay.OrderID, notifysvc.EventPaymentVerified)
 	return pay, nil
 }
 
@@ -197,17 +200,29 @@ func (s *Service) Reconciliation(ctx context.Context, p security.Principal, date
 	return s.payments.Reconciliation(ctx, date, storeID, p.StoreScope())
 }
 
-func (s *Service) queueNotification(ctx context.Context, orderID uuid.UUID, event string) {
-	if !s.params.Bool(ctx, nil, "notify.event."+event+"_enabled") {
-		return
-	}
+// queueNotification renders and queues a customer message. Every failure lands
+// in the audit log: a payment that cleared without the customer hearing about
+// it is something operations must be able to discover (BR-2.10.4).
+func (s *Service) queueNotification(ctx context.Context, orderID uuid.UUID, event notifysvc.Event) {
 	o, err := s.orders.GetInScope(ctx, orderID, nil)
 	if err != nil {
+		s.notifyFailed(ctx, orderID, err)
 		return
 	}
-	_ = s.notifier.Queue(ctx, ports.QueuedNotification{
-		OrderID: &o.ID, CustomerID: &o.CustomerID, Channel: "whatsapp",
-		Provider: s.params.String(ctx, nil, "notify.provider"), Event: event,
-		Target: o.ContactPhone, TemplateKey: "notify.template." + event, Language: "id",
+	store, err := s.stores.Get(ctx, o.StoreID)
+	if err != nil {
+		s.notifyFailed(ctx, orderID, err)
+		return
+	}
+	if err := s.composer.Queue(ctx, event, *o, store.Name, store.AddressLine, notifysvc.Bank{}); err != nil {
+		s.notifyFailed(ctx, orderID, err)
+	}
+}
+
+func (s *Service) notifyFailed(ctx context.Context, orderID uuid.UUID, cause error) {
+	_ = s.audit.Write(ctx, ports.AuditEntry{
+		ActorType: "system", Action: "notify.queue.failed",
+		EntityType: "order", EntityID: &orderID,
+		After: map[string]any{"error": cause.Error()},
 	})
 }

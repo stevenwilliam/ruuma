@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/stevenwilliam/ruuma/internal/app/notifysvc"
 	"github.com/stevenwilliam/ruuma/internal/app/ports"
 	"github.com/stevenwilliam/ruuma/internal/domain/catalog"
 	"github.com/stevenwilliam/ruuma/internal/domain/identity"
@@ -23,6 +24,7 @@ import (
 )
 
 type Service struct {
+	composer   *notifysvc.Composer
 	stores     ports.Stores
 	catalogue  ports.Catalogue
 	slots      ports.Slots
@@ -37,12 +39,24 @@ type Service struct {
 
 func New(stores ports.Stores, catalogue ports.Catalogue, slots ports.Slots, orders ports.Orders,
 	payments ports.Payments, promotions ports.Promotions, customers ports.Customers,
-	params ports.Params, audit ports.Auditor, clk ports.Clock) *Service {
+	params ports.Params, audit ports.Auditor, notifier ports.Notifier, clk ports.Clock) *Service {
 	return &Service{
 		stores: stores, catalogue: catalogue, slots: slots, orders: orders,
 		payments: payments, promotions: promotions, customers: customers,
 		params: params, audit: audit, clock: clk,
+		composer: notifysvc.NewComposer(params, notifier),
 	}
+}
+
+// notifyFailed records a message that could not be queued. It is written to the
+// audit log rather than dropped, because "the customer was never told" is an
+// operational fact somebody has to be able to find.
+func (s *Service) notifyFailed(ctx context.Context, orderID uuid.UUID, cause error) {
+	_ = s.audit.Write(ctx, ports.AuditEntry{
+		ActorType: "system", Action: "notify.queue.failed",
+		EntityType: "order", EntityID: &orderID,
+		After: map[string]any{"error": cause.Error()},
+	})
 }
 
 // CartLine is one line a customer asked for.
@@ -344,6 +358,18 @@ func (s *Service) Create(ctx context.Context, req CreateRequest) (*ports.OrderVi
 		EntityType: "order", EntityID: &created.ID, StoreID: &req.StoreID,
 		After: map[string]any{"order_code": created.OrderCode, "total": int64(created.Total)},
 	})
+
+	// The customer is told what to transfer, to which account, and that the
+	// amount includes their kode unik (BR-2.10.3, BR-2.6.2). A failure here is
+	// logged by the caller, not fatal: the order exists and the same details
+	// are on the order page.
+	if err := s.composer.Queue(ctx, notifysvc.EventOrderReceived, *created,
+		st.Name, st.AddressLine, notifysvc.Bank{
+			Name: bank.BankName, AccountName: bank.AccountName, AccountNumber: bank.AccountNumber,
+		}); err != nil {
+		s.notifyFailed(ctx, created.ID, err)
+	}
+
 	return created, nil
 }
 
