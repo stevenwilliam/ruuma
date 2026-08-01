@@ -322,7 +322,8 @@ type BlackoutResult struct {
 	Note           string
 }
 
-// AddBlackout closes a store for a date, today included.
+// AddBlackout closes a store for a date, today included. The actor, the date
+// and the reason are all recorded (BR-2.1.10).
 func (s *Service) AddBlackout(ctx context.Context, p security.Principal, row BlackoutRow) (*BlackoutResult, error) {
 	if err := s.requireStore(p, row.StoreID); err != nil {
 		return nil, err

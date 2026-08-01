@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"os"
 	"time"
 
 	"github.com/google/uuid"
@@ -11,6 +12,7 @@ import (
 
 	"github.com/stevenwilliam/ruuma/internal/adapter/postgres"
 	"github.com/stevenwilliam/ruuma/internal/platform/config"
+	"github.com/stevenwilliam/ruuma/internal/platform/id"
 	"github.com/stevenwilliam/ruuma/internal/platform/security"
 )
 
@@ -400,11 +402,26 @@ var staffSeeds = []staffSeed{
 	{email: "counter.kg@ruuma.id", name: "Counter Kelapa Gading", role: "counter", storeCodes: []string{"RMA-KG"}},
 }
 
-// seedPassword is a development credential only; the production first-run flow
-// creates the first owner interactively and no default exists (docs/12, A05).
-const seedPassword = "ruuma-dev-password-2026"
+// seedStaffPassword returns the password the demo accounts get. It is read
+// from SEED_PASSWORD when set and otherwise generated fresh, so no credential
+// is ever compiled into the binary and two developers never share one
+// (docs/12, A05).
+func seedStaffPassword() (string, error) {
+	if v := os.Getenv("SEED_PASSWORD"); v != "" {
+		return v, nil
+	}
+	generated, err := id.Token(20)
+	if err != nil {
+		return "", err
+	}
+	return "ruuma-" + generated, nil
+}
 
 func seedStaff(ctx context.Context, db *gorm.DB, log *slog.Logger) error {
+	seedPassword, err := seedStaffPassword()
+	if err != nil {
+		return err
+	}
 	hash, err := security.HashPassword(seedPassword)
 	if err != nil {
 		return err

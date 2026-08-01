@@ -62,7 +62,8 @@ const (
 	// Identity (BR-2.7.x)
 	CodePhoneVerificationRequired Code = "PHONE_VERIFICATION_REQUIRED"
 	CodeAccountLocked             Code = "ACCOUNT_LOCKED"
-	CodeInvalidCredentials        Code = "INVALID_CREDENTIALS"
+	// #nosec G101 -- this is a client-facing error code, not a secret.
+	CodeInvalidCredentials Code = "INVALID_CREDENTIALS"
 )
 
 // Error is an application error with an HTTP status and a stable code.

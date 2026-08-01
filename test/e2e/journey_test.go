@@ -252,7 +252,7 @@ func TestDefinitionOfDone(t *testing.T) {
 		t.Fatalf("tax %v, want 5500", next.Body["tax"])
 	}
 
-	// ── 10. The historical order keeps the rate it was priced at ─────────────
+	// ── 10. A parameter change never rewrites history (BR-2.9.3) ─────────────
 	unchanged := env.Do(http.MethodGet, "/api/v1/orders/"+orderID, customerToken, nil)
 	if int64(unchanged.Body["tax"].(float64)) != tax {
 		t.Fatalf("a past order's tax changed with the parameter (%v ≠ %d) — snapshots must hold (BR-2.5.1)",

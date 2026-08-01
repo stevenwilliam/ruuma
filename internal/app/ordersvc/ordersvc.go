@@ -236,6 +236,8 @@ func (s *Service) Quote(ctx context.Context, req CartRequest) (*Quote, error) {
 	q.Totals = totals
 	q.TaxBps, q.ServiceChargeBps = cfg.TaxBps, cfg.ServiceChargeBps
 	q.KitchenUnits = pricing.KitchenUnits(domainLines)
+	// A quote is valid for pricing.quote_ttl_minutes; an order created against a
+	// stale one is re-priced and re-checked at creation (BR-2.5.14, BR-2.5.13).
 	q.ExpiresAt = now.Add(time.Duration(s.params.Int(ctx, nil, "pricing.quote_ttl_minutes")) * time.Minute)
 	return q, nil
 }
@@ -460,10 +462,8 @@ func (s *Service) Reorder(ctx context.Context, orderID, customerID uuid.UUID) (*
 	}
 	now := s.clock.Now()
 
-	itemIDs := make([]uuid.UUID, 0, len(o.Lines))
-	for _, l := range o.Lines {
-		itemIDs = append(itemIDs, l.MenuItemID)
-	}
+	// The whole store menu is resolved once: a reorder has to know both what
+	// is still on the menu and what has quietly become unavailable.
 	resolved, err := s.catalogue.Menu(ctx, ports.MenuQuery{StoreID: o.StoreID, Limit: 500}, now)
 	if err != nil {
 		return nil, err

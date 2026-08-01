@@ -87,6 +87,8 @@ func Compute(lines []Line, discount money.Rupiah, deliveryFee money.Rupiah, cfg 
 		return t, ErrDiscountRange // BR-2.5.4
 	}
 	t.Discount = discount
+	// Zero in phase 1; in phase 2 it comes from the store's delivery zone
+	// (BR-2.5.6, D16).
 	t.DeliveryFee = money.ClampNonNegative(deliveryFee)
 
 	discounted, err := money.Sub(t.Subtotal, t.Discount)

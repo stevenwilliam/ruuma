@@ -2,7 +2,7 @@
 
 Live status. Legend: ✅ done & tested · 🟡 partial · ⬜ not started.
 
-_Last updated: 2026-08-02 (domain defined, D8–D29 recorded, brand locked, preferences doc added)._
+_Last updated: 2026-08-02 (build complete through step 4: docs, service, frontend, tests and hardening)._
 
 ## M0 — Definition
 - ✅ Repo created + `git init`, pushed to `origin`
@@ -22,12 +22,36 @@ _Last updated: 2026-08-02 (domain defined, D8–D29 recorded, brand locked, pref
 - 🟡 Open questions in `00` — Q1–Q6 closed; Q7 (real store data), Q8 (Google/Instagram OAuth credentials), Q9 (production SMTP) remain, all non-blocking with defaults
 - ⬜ Rewrite docs `01`–`10` + new `12-security.md` from the confirmed scope (step 2 of workflow)
 
-## M1 — Foundation
-- ⬜ Module, CI, `.env.example`, docker-compose, Makefile, Dockerfile
-- ⬜ `platform/*` copied & adapted from SCHOOLCATERING
-- ⬜ Schema + migrations + seed
-- ⬜ Auth + permission matrix
-- ⬜ Pure domain packages + tests
+## M1 — Documents (step 3 of the workflow)
+- ✅ `01` PRD, `02` business rules (115 normative `BR-x.y`), `03` data model, `04` API spec
+- ✅ `05` architecture/NFR, `06` domain operations, `07` test plan, `08` roadmap, `09` deployment, `10` design system, `11` local dev
+- ✅ `12-security.md` — OWASP control map with the test that proves each control
+- ✅ `99-steven-preference.md` — portable engineering DNA
 
-## Notes
-- Nothing under `cmd/`, `internal/`, `db/`, `web/` exists yet — docs-only repo.
+## M2 — Build (step 4 of the workflow)
+- ✅ Module, CI, `.env.example`, docker-compose (MinIO + mailpit only), Makefile, Dockerfile
+- ✅ `platform/*` — apierror, id, config, logging, security, ratelimit, database, metrics, clock, migrate
+- ✅ 15 numbered migrations, embedded, verified **up → down → up** on an empty database
+- ✅ `cmd/api seed` — three deliberately different stores, a menu across all three cuisines, one staff account per role
+- ✅ Pure domain: money, schedule, catalog, pricing, order, payment, identity — exhaustively tested
+- ✅ App layer behind ports (the layering rule is a test), services for catalogue, orders, payments, auth, ops, admin, notifications
+- ✅ Adapters: postgres (store scope enforced in the repository), MinIO storage, WAHA/Meta/log notify, SMTP mail
+- ✅ HTTP: full route surface, deny-by-default authz, live scope resolution, idempotency, rate limits, security headers
+- ✅ Frontend: React 18 + Vite + TS + Tailwind, customer and lazy-loaded admin, ID/EN, search box on every list
+
+## M3 — Test & harden (step 5 of the workflow)
+- ✅ Unit, integration, security and e2e suites all green (`docs/12` §6)
+- ✅ **Zero oversell** proven over 10 rounds × 20 simultaneous checkouts
+- ✅ `go vet`, `staticcheck`, `gosec`, `govulncheck` clean
+- ✅ All 115 `BR-x.y` rules referenced by code or test (`make test-br-coverage`)
+- ✅ Three real defects found by the suites and fixed (`docs/12` §6)
+
+## M4 — Handbooks (step 6 of the workflow)
+- ⬜ `14-production-deployment-handbook.md` (empty Ubuntu, copy-paste, absolute paths)
+- ⬜ `15-user-guide.md`
+- ⬜ `16-admin-guide.md`
+
+## Known gaps
+See `docs/12-security.md` §7: object-storage upload rules, OAuth providers,
+the phase-2 payment webhook and load targets are not yet covered by automated
+tests.

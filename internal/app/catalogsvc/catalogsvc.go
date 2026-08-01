@@ -4,6 +4,7 @@ package catalogsvc
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/google/uuid"
@@ -278,15 +279,11 @@ func (s *Service) group(ctx context.Context) schedule.Group {
 	return schedule.Group{DeliveryEnabled: s.params.Bool(ctx, nil, "fulfilment.delivery_enabled")}
 }
 
+// formatBlock renders an opening block as the customer reads it on a store
+// card: "10:00–21:00".
 func formatBlock(b schedule.Block) string {
-	return pad(b.Opens.Hour) + ":" + pad(b.Opens.Minute) + "–" + pad(b.Closes.Hour) + ":" + pad(b.Closes.Minute)
-}
-
-func pad(n int) string {
-	if n < 10 {
-		return "0" + string(rune('0'+n))
-	}
-	return string(rune('0'+n/10)) + string(rune('0'+n%10))
+	return fmt.Sprintf("%02d:%02d–%02d:%02d",
+		b.Opens.Hour, b.Opens.Minute, b.Closes.Hour, b.Closes.Minute)
 }
 
 // reasonMessage renders a machine reason as customer-facing copy. Every

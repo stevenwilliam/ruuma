@@ -194,7 +194,9 @@ func (r *ParamRepo) ListGroup(ctx context.Context, q string) ([]SysParameter, er
 	return out, nil
 }
 
-// UpsertGroup writes a group parameter and invalidates the cache.
+// UpsertGroup writes a group parameter and invalidates the cache. It changes
+// only what happens next: order lines keep their snapshots and booked slots
+// keep their capacity (BR-2.9.3, BR-2.5.1, BR-2.3.16).
 func (r *ParamRepo) UpsertGroup(ctx context.Context, key, value string, actor uuid.UUID) error {
 	err := r.db.WithContext(ctx).Exec(`
 		INSERT INTO sys_parameters (id, key, value, data_type, updated_by, created_at, updated_at)

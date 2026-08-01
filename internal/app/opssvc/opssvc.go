@@ -118,6 +118,8 @@ func (s *Service) Advance(ctx context.Context, p security.Principal, orderID uui
 			return apierror.Forbidden(apierror.CodeForbidden, "You cannot change that order's state.")
 		}
 	case order.PickedUp:
+		// Handover is matched on the order code at the counter, and the acting
+		// user is recorded (BR-2.8.6).
 		if !p.Can(security.PermOrderStatusHandover) {
 			return apierror.Forbidden(apierror.CodeForbidden, "You cannot hand over that order.")
 		}

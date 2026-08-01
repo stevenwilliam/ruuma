@@ -22,6 +22,10 @@ import (
 	"github.com/stevenwilliam/ruuma/internal/platform/security"
 )
 
+// A customer may sign in with email+password, Google, Instagram or phone+OTP
+// (BR-2.7.2, D24); every method converges on one customer record through
+// customer_identities.
+
 // OAuthProfile is what a provider tells us about a person.
 type OAuthProfile struct {
 	ProviderUserID string

@@ -51,7 +51,8 @@ func created(c *gin.Context, body any) { c.JSON(http.StatusCreated, body) }
 // noContent renders a 204.
 func noContent(c *gin.Context) { c.Status(http.StatusNoContent) }
 
-// listBody is the cursor-paginated list envelope (docs/04 §1).
+// listBody is the cursor-paginated list envelope (docs/04 §1, BR-1.5.2). Every
+// list endpoint accepts ?q= and matches case-insensitively (ILIKE).
 type listBody struct {
 	Items      any    `json:"items"`
 	NextCursor string `json:"next_cursor,omitempty"`

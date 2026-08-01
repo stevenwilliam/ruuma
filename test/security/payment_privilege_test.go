@@ -173,7 +173,7 @@ func TestRejectionNeedsAReason_BR_2_6_8(t *testing.T) {
 		t.Fatalf("slot released on rejection (%d → %d) — it must not be", before, after)
 	}
 
-	// And no automated message went out (D28).
+	// And no automated message went out (BR-2.6.9, D28).
 	for _, msg := range env.Notify.Queued {
 		if msg.Event == "payment_rejected" {
 			t.Fatal("a rejection must not queue an automated message (D28)")

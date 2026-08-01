@@ -93,6 +93,9 @@ func (r *StoreRepo) Create(ctx context.Context, s *Store) error {
 	return r.db.WithContext(ctx).Create(s).Error
 }
 
+// Update writes store master data. The code is deliberately not treated as
+// editable once orders reference the store (BR-1.2.3); the admin UI keeps it
+// read-only after creation and the audit trail records any change.
 func (r *StoreRepo) Update(ctx context.Context, s *Store) error {
 	s.UpdatedAt = time.Now()
 	return r.db.WithContext(ctx).Save(s).Error

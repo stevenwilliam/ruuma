@@ -137,7 +137,8 @@ func (s *Service) Verify(ctx context.Context, p security.Principal, paymentID uu
 }
 
 // Reject returns the order to PENDING_PAYMENT with a reason. No automated
-// message is sent — finance and operations follow up by hand (D28).
+// message is sent — finance and operations follow up by hand, and the reason
+// is shown prominently on the customer's order page (BR-2.6.9, D28).
 func (s *Service) Reject(ctx context.Context, p security.Principal, paymentID uuid.UUID,
 	reason dpay.RejectionReason, note string) error {
 

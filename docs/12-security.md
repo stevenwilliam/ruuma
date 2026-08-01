@@ -6,8 +6,13 @@
 (D23).
 
 Each control names **where it is implemented** and **the test that proves it**.
-A control without a test is not a control. Status is filled in as the hardening
-pass lands (`docs/PROGRESS.md` tracks it).
+A control without a test is not a control.
+
+**Status as of 2026-08-02 — the hardening pass has run.** `go vet`,
+`staticcheck` and `gosec` are clean, `govulncheck` reports no vulnerability
+reachable from ruuma's code, all 115 `BR-x.y` rules are referenced by code or a
+test, and migrations apply up → down → up on an empty database. What is
+**not** yet exercised is listed in §7.
 
 ---
 
@@ -165,7 +170,41 @@ the admin guide; every deletion is audited.
 | `append_only_test` | `UPDATE`/`DELETE` on event and audit tables rejected |
 | `enumeration_test` | Auth/OTP/tracking responses reveal no account existence |
 
-## 6. ASVS L2 coverage notes
+## 6. What the tests actually run — 2026-08-02
+
+| Suite | Command | Result |
+|---|---|---|
+| Domain unit | `make test` | pass — money, schedule, catalogue, pricing, order state machine (all 169 transition pairs), payment, identity, layering rule, permissions matrix |
+| Integration | `make test-integration` | pass — **10 rounds × 20 simultaneous checkouts on a slot with room for one: exactly one success every round**, both capacity axes, a direct `UPDATE` refused by the CHECK constraint, release-exactly-once, no auto-expiry after 30 days |
+| Security | `make test-security` | pass — cross-store per role and resource, permission matrix denials, anonymous denial, IDOR (404 not 403), payment privilege, JWT tampering/forged role/`alg=none`/foreign key/expiry, live scope and active-flag re-resolution, headers and CSP, CORS allow-list, no internals in errors, rate limits with `Retry-After`, unpaid cap, injection fuzz, append-only enforcement |
+| End to end | `make test-e2e` | pass — the definition-of-done journey |
+| Frontend | `npm run test` | pass — 14 tests including the search-box-on-every-list check |
+| Quality gate | `make check` | `go vet`, `staticcheck`, `gosec`, `govulncheck`, no-shell-out all clean |
+
+Three defects the suites found, now fixed and each covered by the test that
+found them: an idempotent replay that silently re-executed (the stored response
+was written as `bytea` into a `jsonb` column and the error was ignored); no
+notification queued at all (order-received was never wired and the verified
+path swallowed its lookup error); and a verify response reporting
+`verified_at: null` instead of the timestamp it had just written.
+
+## 7. Not yet exercised
+
+Honest gaps, so nobody reads a green suite as more than it is:
+
+- **TLS, HSTS and the CDN caveat** are deployment-time; they are asserted by the
+  handbook checklist, not by a test.
+- **MinIO upload rules** (magic bytes, size, re-encode, presigned expiry) are
+  implemented in `adapter/storage` and exercised by hand; the suites use an
+  in-memory stand-in, so the object-storage path itself has no automated test.
+- **Google and Instagram OAuth** flows are built but disabled without
+  credentials (docs/00 Q8), so only the refusal path is covered.
+- **The phase-2 payment webhook** (HMAC, timestamp window, replay) is written
+  but unused; it needs its own suite before QRIS goes live.
+- **Load and p95 targets** in `05-architecture-and-nfr.md` §4 have not been
+  measured.
+
+## 8. ASVS L2 coverage notes
 
 Chapters and how they are met: V1 architecture (`05`), V2 authentication (A07 +
 BR-2.7), V3 session management (rotating refresh, revocation), V4 access control

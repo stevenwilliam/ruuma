@@ -79,7 +79,9 @@ func New(ctx context.Context, cfg Config) (*Client, error) {
 	return &Client{mc: mc, bucket: cfg.Bucket}, nil
 }
 
-// Kind selects the ruleset for an upload.
+// Kind selects the ruleset for an upload. Menu photos follow the same rules as
+// payment proofs — generated keys, magic-byte checks, re-encoding, presigned
+// access only (BR-2.2.8, BR-2.6.11).
 type Kind string
 
 const (

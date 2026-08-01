@@ -72,7 +72,15 @@ func VerifyPassword(plain, encoded string) (bool, error) {
 	if err != nil {
 		return false, ErrInvalidHash
 	}
-	got := argon2.IDKey([]byte(plain), salt, timeCost, memory, threads, uint32(len(want)))
+	// Bound the stored key length before converting it: a hash field is
+	// attacker-influenced if a database is ever tampered with, and an
+	// unchecked conversion is how that becomes a panic or a weak comparison.
+	if len(want) < 16 || len(want) > 1024 {
+		return false, ErrInvalidHash
+	}
+	// #nosec G115 -- the length is bounded to 16..1024 immediately above.
+	keyLen := uint32(len(want))
+	got := argon2.IDKey([]byte(plain), salt, timeCost, memory, threads, keyLen)
 	return subtle.ConstantTimeCompare(got, want) == 1, nil
 }
 

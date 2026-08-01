@@ -21,7 +21,8 @@ const (
 	ctxKeyLogger
 )
 
-// Sensitive attribute keys are replaced wholesale.
+// Sensitive attribute keys are replaced wholesale. ruuma stores only what an
+// order needs (BR-2.10.6), and none of that belongs in a log line.
 var sensitiveKeys = map[string]bool{
 	"phone": true, "contact_phone": true, "msisdn": true, "target": true,
 	"email": true, "contact_email": true, "password": true, "password_hash": true,
