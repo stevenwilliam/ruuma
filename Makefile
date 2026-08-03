@@ -108,8 +108,17 @@ web-install:
 	cd $(ROOT)/web && npm install
 
 .PHONY: web-dev
-web-dev:
+web-dev: ## dev server on 127.0.0.1:5173 (this machine only)
 	cd $(ROOT)/web && npm run dev
+
+# This box is headless, so the browser is always on another machine. Binding
+# wide is only safe because ufw allows 5173 from the LAN subnet alone — keep
+# that rule in place (docs/11 §6).
+WEB_DEV_HOST ?= 0.0.0.0
+
+.PHONY: web-dev-lan
+web-dev-lan: ## dev server reachable from the LAN (see docs/11 §6)
+	cd $(ROOT)/web && npm run dev -- --host $(WEB_DEV_HOST)
 
 .PHONY: web-build
 web-build:

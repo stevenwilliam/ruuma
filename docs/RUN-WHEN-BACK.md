@@ -30,12 +30,19 @@ make run          # API on 127.0.0.1:8080
 In a second terminal:
 
 ```bash
-cd /home/dev/projects/ruuma/web
-npm run dev       # http://127.0.0.1:5173
+cd /home/dev/projects/ruuma
+make web-dev-lan  # http://192.168.88.101:5173 — see docs/11 §6
 ```
 
+`claudedev` is headless, so `127.0.0.1:5173` is only reachable from the box
+itself. `make web-dev-lan` binds `0.0.0.0`, and ufw needs the port opened to the
+LAN subnet once (`docs/11-local-dev-setup.md` §6 has the exact rule). Use plain
+`make web-dev` plus an SSH tunnel instead if the network is untrusted.
+
 The seed prints a generated staff password — sign in to the admin at
-`/admin` with `owner@ruuma.id` and that password.
+`/admin` with `owner@ruuma.id` and that password. It is shown once and not
+stored, so if it has scrolled away, re-run `make seed` with `SEED_PASSWORD` set
+in the environment, or mint a fresh account with `cmd/api create-owner`.
 
 ## 2. Exercise the object-storage path by hand
 

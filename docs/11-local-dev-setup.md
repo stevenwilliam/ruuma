@@ -65,7 +65,7 @@ make web-build       # production SPA build
 | Service | URL | Credentials |
 |---|---|---|
 | API | `http://127.0.0.1:8080` | — |
-| SPA (dev) | `http://127.0.0.1:5173` | — |
+| SPA (dev) | `http://127.0.0.1:5173`, or `http://192.168.88.101:5173` via `make web-dev-lan` (§6) | — |
 | Postgres | `127.0.0.1:5432/ruuma` | `/etc/ruuma/ruuma.env` |
 | Test DB | `127.0.0.1:5432/ruuma_test` | recreated by `make test-integration` |
 | MinIO | `http://127.0.0.1:9002` (console `9003`) | `.env` |
@@ -81,11 +81,48 @@ Set `notify.provider` to `log` in `sys_parameters` to keep WhatsApp sends in the
 `notifications` table without touching the shared WAHA session. Set it to `waha`
 only when deliberately testing a real send, and only to your own number.
 
-## 6. Editor
+## 6. Seeing the SPA from your own machine
+
+`claudedev` is headless — no desktop, no browser. `make web-dev` binds Vite to
+`127.0.0.1`, which nothing outside the box can reach, so the dev server has to
+be published deliberately.
+
+```bash
+cd /home/dev/projects/ruuma
+make web-dev-lan     # binds 0.0.0.0:5173 instead of 127.0.0.1:5173
+```
+
+That alone is not enough: ufw defaults to deny-incoming and 5173 is not in the
+allow list. Open it **to the LAN subnet only** — never `Anywhere`, because the
+Vite dev server has no authentication and serves project source:
+
+```bash
+sudo ufw allow from 192.168.88.0/24 to any port 5173 proto tcp \
+  comment 'ruuma vite dev (LAN only)'
+```
+
+Then browse `http://192.168.88.101:5173`. The `/api` proxy in
+`/home/dev/projects/ruuma/web/vite.config.ts` still points at `127.0.0.1:8080`,
+which resolves on the server side, so the API needs no extra exposure.
+
+`WEB_DEV_HOST` overrides the bind address if `0.0.0.0` is too wide — for example
+`make web-dev-lan WEB_DEV_HOST=192.168.88.101` keeps it off the Docker bridges.
+
+The alternative that changes nothing on the server is an SSH tunnel from your
+own machine, which is the better choice on an untrusted network:
+
+```bash
+ssh -L 5173:127.0.0.1:5173 dev@192.168.88.101   # then browse http://localhost:5173
+```
+
+Close the port again when you are done: `sudo ufw delete allow from
+192.168.88.0/24 to any port 5173 proto tcp`.
+
+## 7. Editor
 
 Use `vi` in runbooks and shell instructions.
 
-## 7. Notes carried from SCHOOLCATERING
+## 8. Notes carried from SCHOOLCATERING
 
 - If a compose port cannot bind, publish on a different host port and point tests
   at it via an env var rather than editing hard-coded values.
