@@ -13,6 +13,10 @@ import OrderPage from './pages/customer/Order'
 import OrdersPage from './pages/customer/Orders'
 import AuthPage from './pages/customer/Auth'
 
+// Lazy: the credits page carries the whole photo manifest and almost nobody
+// opens it, but the licences require it to be reachable from every page.
+const CreditsPage = lazy(() => import('./pages/customer/Credits'))
+
 // The whole admin area is a separate chunk: a customer never downloads it
 // (docs/05 §1, vite.config.ts).
 const AdminApp = lazy(() => import('./pages/admin/AdminApp'))
@@ -36,6 +40,7 @@ export default function App() {
           <Route path="/orders" element={<OrdersPage />} />
           <Route path="/orders/:id" element={<OrderPage />} />
           <Route path="/signin" element={<AuthPage />} />
+          <Route path="/credits" element={<CreditsPage />} />
         </Route>
         <Route path="/admin/*" element={<AdminApp />} />
       </Routes>

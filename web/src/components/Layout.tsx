@@ -91,6 +91,11 @@ export function CustomerLayout() {
           />
           <p>{copy.footer.cuisines}</p>
           <p className="text-primary-fg/80">{copy.footer.rights}</p>
+          {/* CC BY / BY-SA dish photography has to name its photographers
+              wherever it is published, so this link is on every page. */}
+          <Link to="/credits" className="mt-1 w-fit underline underline-offset-4">
+            {copy.footer.credits}
+          </Link>
         </div>
       </footer>
     </div>

@@ -34,7 +34,7 @@ than being binary files nobody can reproduce (D31):
 | `brand/ruuma-logo-white.png` | header and footer on the emerald fill |
 | `brand/ruuma-icon-512.png`, `-192.png` | favicon |
 | `brand/ruuma-apple-touch-icon.png` | iOS home screen, opaque `--bg` behind it |
-| `dish/<SKU>.jpg` | placeholder dish photography, 1200×900 |
+| `dish/<SKU>.jpg` | dish photography, 1200×900 — see below |
 
 ```bash
 /usr/local/go/bin/go run ./tools/genassets
@@ -54,12 +54,37 @@ non-square favicon squashes it into its square slot — which is why the logo
 looked stretched in the tab. The generator pads it onto a square canvas at 12%
 clear space instead of cropping or restretching it.
 
-**Dish cards are textless.** ruuma ships ID and EN from message catalogues
-(CLAUDE.md §10), so a dish name baked into a JPEG cannot be translated; the
-card supplies colour and the UI draws the name over it. Each card is
-deterministic per SKU — regenerating never reshuffles how the menu looks — and
-tinted by cuisine so a category reads as a family in the grid. These are
-**placeholders and are replaced by real photography before launch**; the admin
+### 1.2 Dish photography
+
+Real photographs, fetched from Wikimedia Commons by `tools/dishphotos` and
+centre-cropped to 4:3 (D31):
+
+```bash
+/usr/local/go/bin/go run ./tools/dishphotos          # all SKUs
+/usr/local/go/bin/go run ./tools/dishphotos IDN-001  # just one
+```
+
+**Only commercially-usable licences are accepted.** The tool refuses NonCommercial
+and NoDerivatives outright — a menu on a site taking money is a commercial use.
+Every image's photographer, licence and source URL are written to
+`web/src/credits.json` and published at **`/credits`**, linked from the footer
+of every page. CC BY and CC BY-SA require that; it is an obligation, not a
+courtesy, and removing the link breaks the licence.
+
+**Every fetched image must be looked at before it ships.** File titles are not
+trustworthy. A search for "grilled chicken steak" returned American
+chicken-fried steak smothered in gravy; "braised pork belly" returned a bao bun
+photographed on top of a rival restaurant's menu and QR code. Neither is
+detectable from metadata.
+
+`tools/genassets` still produces the textless placeholder cards, which remain
+the fallback when a fetch fails — a coloured plate is better than a broken
+image. They are textless because ruuma ships ID and EN from message catalogues
+(CLAUDE.md §10), so a dish name baked into a JPEG cannot be translated.
+
+**Commons photography is a stopgap.** It shows the right dish but not *ruuma's*
+dish, and a customer comparing the photo to what they collect will notice.
+Replace it with the kitchen's own photography before launch; the admin
 photo-upload path to MinIO is unchanged.
 
 ## 2. Palette
@@ -150,7 +175,7 @@ Images are lazy-loaded and carry intrinsic `width`/`height` so the grid does
 not shift as they arrive. `alt` is empty: the name sits next to the image as
 real text, so describing it again is noise to a screen reader.
 
-Source is `web/public/dish/<SKU>.jpg` (§1.1). The MinIO-backed upload path
+Source is `web/public/dish/<SKU>.jpg` (§1.2). The MinIO-backed upload path
 exists in the admin but is **not yet wired to the customer menu** — the API
 returns `photo_key`, and no route serves an object by key. Real photography
 needs that route before it can appear here.

@@ -5,7 +5,14 @@ export const en: typeof IDCatalog = {
   nav: { menu: 'Menu', cart: 'Cart', orders: 'Orders', account: 'Account', stores: 'Stores' },
   footer: {
     cuisines: 'Indonesian · Chinese · Western cuisine',
+    credits: 'Photo credits',
     rights: '© Ruuma Eatery. All rights reserved.',
+  },
+  credits: {
+    title: 'Photo credits',
+    intro: 'Dish photography is sourced from Wikimedia Commons. Their licences require us to name the photographer and licence for each image.',
+    by: 'Photo by',
+    source: 'Source',
   },
   common: {
     search: 'Search…',

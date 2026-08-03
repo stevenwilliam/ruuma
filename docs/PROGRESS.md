@@ -39,7 +39,8 @@ _Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden
 - ✅ Frontend: React 18 + Vite + TS + Tailwind, customer and lazy-loaded admin, ID/EN, search box on every list
 - ✅ Home is the photo-led menu grid; store resolved silently against the single outlet (D30)
 - ✅ Emerald header/footer, square app icons, reversed-out wordmark (D31)
-- 🟡 Dish imagery is generated placeholder art (D31) — real photography outstanding
+- ✅ Dish photography: 21 real Commons photos, all commercially licensed, each reviewed by eye; credits at `/credits` (D31)
+- 🟡 Commons photos are a stopgap — they show the right dish, not ruuma's dish; the kitchen's own photography is outstanding
 - ⬜ Admin-uploaded menu photos do not reach the customer menu: the API returns `photo_key` and no route serves the object
 
 ## M3 — Test & harden (step 5 of the workflow)

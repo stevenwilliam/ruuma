@@ -3,7 +3,14 @@ export const id = {
   nav: { menu: 'Menu', cart: 'Keranjang', orders: 'Pesanan', account: 'Akun', stores: 'Gerai' },
   footer: {
     cuisines: 'Masakan Indonesia · Tionghoa · Barat',
+    credits: 'Kredit foto',
     rights: '© Ruuma Eatery. Seluruh hak cipta dilindungi.',
+  },
+  credits: {
+    title: 'Kredit foto',
+    intro: 'Foto hidangan bersumber dari Wikimedia Commons. Lisensinya mewajibkan kami mencantumkan fotografer dan lisensi setiap gambar.',
+    by: 'Foto oleh',
+    source: 'Sumber',
   },
   common: {
     search: 'Cari…',
