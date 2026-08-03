@@ -497,8 +497,7 @@ server {
     # hashes that §12's release step has already deleted — a blank page that
     # only a manual cache clear fixes. Never cache it.
     location = /index.html {
-        expires -1;
-        add_header Cache-Control "no-store, must-revalidate";
+        add_header Cache-Control "no-store, must-revalidate" always;
     }
 }
 
@@ -523,8 +522,7 @@ server {
     location / { try_files $uri $uri/ /index.html; }
 
     location = /index.html {
-        expires -1;
-        add_header Cache-Control "no-store, must-revalidate";
+        add_header Cache-Control "no-store, must-revalidate" always;
     }
 }
 EOF
