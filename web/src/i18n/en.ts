@@ -3,6 +3,10 @@ import type { id as IDCatalog } from './id'
 export const en: typeof IDCatalog = {
   brand: 'Ruuma Eatery',
   nav: { menu: 'Menu', cart: 'Cart', orders: 'Orders', account: 'Account', stores: 'Stores' },
+  footer: {
+    cuisines: 'Indonesian · Chinese · Western cuisine',
+    rights: '© Ruuma Eatery. All rights reserved.',
+  },
   common: {
     search: 'Search…',
     searchLabel: 'Search',

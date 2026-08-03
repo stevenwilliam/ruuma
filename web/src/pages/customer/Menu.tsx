@@ -5,7 +5,7 @@
 import { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
 import { api, type ListResponse, type MenuItem, type Store } from '../../lib/api'
-import { selectedStoreId } from '../../lib/cart'
+import { selectStore, selectedStoreId } from '../../lib/cart'
 import { SearchBox } from '../../components/SearchBox'
 import { Badge, Card, EmptyState, ErrorNote, Spinner } from '../../components/ui'
 import { rupiah } from '../../lib/format'
@@ -16,7 +16,7 @@ const CUISINES = ['indonesian', 'chinese', 'western', 'other'] as const
 export default function MenuPage() {
   const copy = t()
   const navigate = useNavigate()
-  const storeId = selectedStoreId()
+  const [storeId, setStoreId] = useState(selectedStoreId)
 
   const [store, setStore] = useState<Store | null>(null)
   const [items, setItems] = useState<MenuItem[] | null>(null)
@@ -26,17 +26,38 @@ export default function MenuPage() {
   const [diet, setDiet] = useState('')
   const [sort, setSort] = useState('')
 
-  useEffect(() => {
-    if (!storeId) navigate('/')
-  }, [storeId, navigate])
+  const [stores, setStores] = useState<Store[]>([])
 
+  // The store is resolved, not asked for. With a single outlet (D30) there is
+  // exactly one answer, so picking it silently is the whole point; the picker
+  // only reappears once a second store exists.
   useEffect(() => {
-    if (!storeId) return
+    let cancelled = false
     api
       .get<ListResponse<Store>>('/stores')
-      .then((res) => setStore(res.items.find((s) => s.id === storeId) ?? null))
-      .catch(() => undefined)
-  }, [storeId])
+      .then((res) => {
+        if (cancelled) return
+        setStores(res.items)
+        const current = res.items.find((s) => s.id === storeId)
+        if (current) {
+          setStore(current)
+          return
+        }
+        // Either nothing chosen yet, or the remembered store is gone —
+        // deactivated, or a stale id in a browser that used the old picker.
+        if (res.items.length === 1) {
+          selectStore(res.items[0].id)
+          setStore(res.items[0])
+          setStoreId(res.items[0].id)
+        } else if (res.items.length > 1) {
+          navigate('/stores')
+        }
+      })
+      .catch((err: Error) => !cancelled && setError(err.message))
+    return () => {
+      cancelled = true
+    }
+  }, [storeId, navigate])
 
   useEffect(() => {
     if (!storeId) return
@@ -63,11 +84,19 @@ export default function MenuPage() {
       <header className="flex flex-wrap items-baseline justify-between gap-2">
         <div>
           <h1 className="font-display text-2xl font-bold">{store?.name ?? copy.menu.title}</h1>
-          {store && <p className="text-sm text-muted">{store.address_line}</p>}
+          {store && (
+            <p className="text-sm text-muted">
+              {store.address_line}
+              {store.city ? `, ${store.city}` : ''}
+            </p>
+          )}
         </div>
-        <Link to="/" className="text-sm font-medium text-primary underline underline-offset-4">
-          {copy.stores.change}
-        </Link>
+        {/* Only offer a change when there is something to change to. */}
+        {stores.length > 1 && (
+          <Link to="/stores" className="text-sm font-medium text-primary underline underline-offset-4">
+            {copy.stores.change}
+          </Link>
+        )}
       </header>
 
       <SearchBox value={query} onChange={setQuery} />
@@ -122,11 +151,33 @@ export default function MenuPage() {
       {!items && !error && <Spinner label={copy.common.loading} />}
       {items && items.length === 0 && <EmptyState>{copy.menu.empty}</EmptyState>}
 
-      <ul className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+      {/* Two across on desktop, not three: the photo is what sells the dish,
+          so it gets the space (docs/10 §4.2). */}
+      <ul className="grid gap-4 sm:grid-cols-2">
         {(items ?? []).map((item) => (
           <li key={item.id}>
             <Link to={`/menu/${item.id}`} className="block h-full">
-              <Card className="flex h-full flex-col gap-2 transition-colors hover:border-primary">
+              <Card className="flex h-full flex-col gap-2 overflow-hidden !p-0 transition-colors hover:border-primary">
+                <div className="relative aspect-[4/3] w-full overflow-hidden bg-primary-subtle">
+                  <img
+                    src={`/dish/${item.sku}.jpg`}
+                    alt=""
+                    loading="lazy"
+                    width={1200}
+                    height={900}
+                    className={[
+                      'h-full w-full object-cover transition-transform duration-300 hover:scale-105',
+                      item.is_available ? '' : 'grayscale',
+                    ].join(' ')}
+                  />
+                  {!item.is_available && (
+                    <span className="absolute inset-0 flex items-center justify-center bg-black/45 text-sm font-semibold uppercase tracking-wide text-white">
+                      {copy.menu.soldOut}
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex flex-col gap-2 p-4 pt-3">
                 <div className="flex items-start justify-between gap-2">
                   <h2 className="font-display text-base font-semibold">{localeName(item)}</h2>
                   <span className="tabular whitespace-nowrap text-sm font-semibold">
@@ -150,12 +201,14 @@ export default function MenuPage() {
                       {copy.menu.leadTime.replace('{n}', String(item.min_lead_minutes))}
                     </Badge>
                   )}
-                  {!item.is_available && <Badge tone="danger">{copy.menu.soldOut}</Badge>}
+                  {/* Sold out is called out over the photo instead of as a
+                      badge down here, where it was easy to miss. */}
                   {item.is_available && item.stock_left !== null && item.stock_left <= 5 && (
                     <Badge tone="warning">
                       {copy.menu.stockLeft.replace('{n}', String(item.stock_left))}
                     </Badge>
                   )}
+                </div>
                 </div>
               </Card>
             </Link>

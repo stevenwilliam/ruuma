@@ -152,6 +152,8 @@ export type MenuItem = {
   category_name_id: string
   category_name_en: string
   cuisine: string
+  // The SKU also names the dish photo under /dish/<sku>.jpg.
+  sku: string
   name_id: string
   name_en: string
   description_id: string

@@ -19,7 +19,7 @@ _Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden
 - ✅ Brand locked: emerald `#277066` from the supplied logo, contrast-checked light/dark tokens in `10` (D20); logo at `web/public/brand/ruuma-logo-emerald.png`
 - ✅ Auth, payment-reject, auto-cancel-phasing, same-day blackout and notification scope settled (D24–D28)
 - ✅ `docs/99-steven-preference.md` — portable engineering DNA (working style, stack, DB, security, doc-set convention, bootstrap checklist) (D29)
-- 🟡 Open questions in `00` — Q1–Q6 closed; Q7 (real store data), Q8 (Google/Instagram OAuth credentials), Q9 (production SMTP) remain, all non-blocking with defaults
+- 🟡 Open questions in `00` — Q1–Q6 closed; Q7 (real store data) **closed by D30**; Q8 (Google/Instagram OAuth credentials), Q9 (production SMTP) remain, all non-blocking with defaults
 
 ## M1 — Documents (step 3 of the workflow)
 - ✅ `01` PRD, `02` business rules (115 normative `BR-x.y`), `03` data model, `04` API spec
@@ -31,12 +31,16 @@ _Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden
 - ✅ Module, CI, `.env.example`, docker-compose (MinIO + mailpit only), Makefile, Dockerfile
 - ✅ `platform/*` — apierror, id, config, logging, security, ratelimit, database, metrics, clock, migrate
 - ✅ 15 numbered migrations, embedded, verified **up → down → up** on an empty database
-- ✅ `cmd/api seed` — three deliberately different stores, a menu across all three cuisines, one staff account per role
+- ✅ `cmd/api seed` — the single outlet `RMA-MM` (D30), a menu across all three cuisines, one staff account per role
 - ✅ Pure domain: money, schedule, catalog, pricing, order, payment, identity — exhaustively tested
 - ✅ App layer behind ports (the layering rule is a test), services for catalogue, orders, payments, auth, ops, admin, notifications
 - ✅ Adapters: postgres (store scope enforced in the repository), MinIO storage, WAHA/Meta/log notify, SMTP mail
 - ✅ HTTP: full route surface, deny-by-default authz, live scope resolution, idempotency, rate limits, security headers
 - ✅ Frontend: React 18 + Vite + TS + Tailwind, customer and lazy-loaded admin, ID/EN, search box on every list
+- ✅ Home is the photo-led menu grid; store resolved silently against the single outlet (D30)
+- ✅ Emerald header/footer, square app icons, reversed-out wordmark (D31)
+- 🟡 Dish imagery is generated placeholder art (D31) — real photography outstanding
+- ⬜ Admin-uploaded menu photos do not reach the customer menu: the API returns `photo_key` and no route serves the object
 
 ## M3 — Test & harden (step 5 of the workflow)
 - ✅ Unit, integration, security and e2e suites all green (`docs/12` §6)

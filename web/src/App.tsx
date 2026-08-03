@@ -23,8 +23,13 @@ export default function App() {
     <Suspense fallback={<Spinner label={copy.common.loading} />}>
       <Routes>
         <Route element={<CustomerLayout />}>
-          <Route path="/" element={<StoresPage />} />
+          {/* Home is the menu, not the store picker: ruuma runs a single
+              outlet (D30), so asking which store to order from was a step
+              that only ever had one answer. The picker stays reachable at
+              /stores for when a second outlet opens. */}
+          <Route path="/" element={<MenuPage />} />
           <Route path="/menu" element={<MenuPage />} />
+          <Route path="/stores" element={<StoresPage />} />
           <Route path="/menu/:id" element={<ItemPage />} />
           <Route path="/cart" element={<CartPage />} />
           <Route path="/checkout" element={<CheckoutPage />} />

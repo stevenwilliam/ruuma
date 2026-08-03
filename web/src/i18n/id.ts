@@ -1,6 +1,10 @@
 export const id = {
   brand: 'Ruuma Eatery',
   nav: { menu: 'Menu', cart: 'Keranjang', orders: 'Pesanan', account: 'Akun', stores: 'Gerai' },
+  footer: {
+    cuisines: 'Masakan Indonesia · Tionghoa · Barat',
+    rights: '© Ruuma Eatery. Seluruh hak cipta dilindungi.',
+  },
   common: {
     search: 'Cari…',
     searchLabel: 'Cari',

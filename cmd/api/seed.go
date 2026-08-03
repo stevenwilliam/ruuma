@@ -16,8 +16,8 @@ import (
 	"github.com/stevenwilliam/ruuma/internal/platform/security"
 )
 
-// runSeed loads demo data: three deliberately different stores, a menu across
-// all three cuisines, and one staff account per role.
+// runSeed loads demo data: the single outlet (D30), a menu across all three
+// cuisines, and one staff account per role.
 //
 // This is a command, not a migration, so a production deployment never receives
 // fake stores (docs/03 §4). It refuses to run against APP_ENV=production.
@@ -47,6 +47,8 @@ func runSeed(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 
 type storeSeed struct {
 	code, name, slug, address, city, phone string
+	province, postal                       string
+	lat, lng                               float64
 	modes                                  []string
 	closedWeekdays                         []time.Weekday
 	pickupOpen, pickupClose                string
@@ -54,37 +56,23 @@ type storeSeed struct {
 	bank                                   [3]string // bank, account name, account number
 }
 
-// The three stores differ on purpose: one open all week, one closed Sunday, one
-// closed Saturday and Sunday. That is what makes the closed-weekday rules
-// (BR-2.1.4) visible in a demo and meaningful in the tests.
+// ruuma trades from one outlet (D30). The store scope in the schema and the
+// repository layer is unchanged — it is a tenancy boundary that has to hold
+// before a second store exists, not after — but the seed no longer invents
+// outlets that the business does not have.
 var storeSeeds = []storeSeed{
 	{
-		code: "RMA-KG", name: "Ruuma Kelapa Gading", slug: "kelapa-gading",
-		address: "Jl. Boulevard Raya Blok A No. 1, Kelapa Gading — SEED, replace",
-		city:    "Jakarta Utara", phone: "+622145551001",
-		modes:      []string{"pickup", "delivery"},
+		code: "RMA-MM", name: "RUUMA Menara Matahari", slug: "menara-matahari",
+		address: "Jl. Boulevard Palem Raya No. 7, Lippo Karawaci Central",
+		city:    "Tangerang", province: "Banten", postal: "15811",
+		phone: "+622145551001",
+		// Menara Matahari, Lippo Karawaci. Approximate to a few dozen metres —
+		// good enough to sort by distance when a second outlet opens, and to be
+		// corrected from the admin then.
+		lat: -6.2258, lng: 106.6087,
+		modes:      []string{"pickup"},
 		pickupOpen: "10:00:00", pickupClose: "21:00:00",
-		deliveryOpen: "10:00:00", deliveryClose: "20:00:00",
 		bank: [3]string{"BCA", "PT Ruuma Eatery — SEED", "1234567890"},
-	},
-	{
-		code: "RMA-SDR", name: "Ruuma Senayan", slug: "senayan",
-		address: "Jl. Asia Afrika No. 8, Senayan — SEED, replace",
-		city:    "Jakarta Pusat", phone: "+622145551002",
-		modes:          []string{"pickup"},
-		closedWeekdays: []time.Weekday{time.Sunday},
-		pickupOpen:     "10:00:00", pickupClose: "21:00:00",
-		bank: [3]string{"BCA", "PT Ruuma Eatery — SEED", "1234567891"},
-	},
-	{
-		code: "RMA-BSD", name: "Ruuma BSD", slug: "bsd",
-		address: "Jl. Grand Boulevard No. 12, BSD City — SEED, replace",
-		city:    "Tangerang Selatan", phone: "+622145551003",
-		modes:          []string{"pickup", "delivery"},
-		closedWeekdays: []time.Weekday{time.Saturday, time.Sunday},
-		pickupOpen:     "11:00:00", pickupClose: "20:00:00",
-		deliveryOpen: "11:00:00", deliveryClose: "19:00:00",
-		bank: [3]string{"Mandiri", "PT Ruuma Eatery — SEED", "9876543210"},
 	},
 }
 
@@ -101,6 +89,18 @@ func seedStores(ctx context.Context, db *gorm.DB, log *slog.Logger) error {
 			AddressLine: s.address, City: s.city, Phone: s.phone,
 			Timezone: "Asia/Jakarta", IsActive: true,
 			CreatedAt: time.Now(), UpdatedAt: time.Now(),
+		}
+		if s.province != "" {
+			store.Province = &s.province
+		}
+		if s.postal != "" {
+			store.PostalCode = &s.postal
+		}
+		// Coordinates drive nearest-store ordering once there is more than one
+		// outlet to order (D30); a zero pair means "not surveyed", not "null
+		// island", so it is left NULL rather than stored as 0,0.
+		if s.lat != 0 || s.lng != 0 {
+			store.Latitude, store.Longitude = &s.lat, &s.lng
 		}
 		if err := db.WithContext(ctx).Create(&store).Error; err != nil {
 			return err
@@ -151,14 +151,15 @@ func seedStores(ctx context.Context, db *gorm.DB, log *slog.Logger) error {
 		log.Info("store seeded", "code", s.code)
 	}
 
-	// A per-date override on the BSD store, which is otherwise closed at the
-	// weekend — the worked example of D18 / BR-2.1.6.
-	var bsd postgres.Store
-	if err := db.WithContext(ctx).Where("code = ?", "RMA-BSD").First(&bsd).Error; err == nil {
+	// A per-date override — the worked example of D18 / BR-2.1.6. It extends
+	// one upcoming Sunday to 22:00 rather than opening a normally-closed day,
+	// now that the single outlet trades every day.
+	var mm postgres.Store
+	if err := db.WithContext(ctx).Where("code = ?", "RMA-MM").First(&mm).Error; err == nil {
 		next := nextWeekday(time.Now(), time.Sunday)
 		open, close := "11:00:00", "22:00:00"
 		row := postgres.StoreDateOverride{
-			ID: uuid.New(), StoreID: bsd.ID, BusinessDate: next,
+			ID: uuid.New(), StoreID: mm.ID, BusinessDate: next,
 			FulfilmentType: "pickup", BlockIndex: 0,
 			OpensAt: &open, ClosesAt: &close,
 			Reason:    strp("Special Sunday opening — seeded example of a per-date override"),
@@ -394,12 +395,10 @@ var staffSeeds = []staffSeed{
 	{email: "owner@ruuma.id", name: "Owner", role: "owner"},
 	{email: "admin@ruuma.id", name: "Admin", role: "admin"},
 	{email: "finance@ruuma.id", name: "Finance (group)", role: "finance", groupScope: true},
-	{email: "finance.kg@ruuma.id", name: "Finance Kelapa Gading", role: "finance", storeCodes: []string{"RMA-KG"}},
-	{email: "manager.kg@ruuma.id", name: "Manager Kelapa Gading", role: "store_manager", storeCodes: []string{"RMA-KG"}},
-	{email: "manager.bsd@ruuma.id", name: "Manager BSD", role: "store_manager", storeCodes: []string{"RMA-BSD"}},
-	{email: "kitchen.kg@ruuma.id", name: "Kitchen Kelapa Gading", role: "kitchen", storeCodes: []string{"RMA-KG"}},
-	{email: "kitchen.sdr@ruuma.id", name: "Kitchen Senayan", role: "kitchen", storeCodes: []string{"RMA-SDR"}},
-	{email: "counter.kg@ruuma.id", name: "Counter Kelapa Gading", role: "counter", storeCodes: []string{"RMA-KG"}},
+	{email: "finance.mm@ruuma.id", name: "Finance Menara Matahari", role: "finance", storeCodes: []string{"RMA-MM"}},
+	{email: "manager.mm@ruuma.id", name: "Manager Menara Matahari", role: "store_manager", storeCodes: []string{"RMA-MM"}},
+	{email: "kitchen.mm@ruuma.id", name: "Kitchen Menara Matahari", role: "kitchen", storeCodes: []string{"RMA-MM"}},
+	{email: "counter.mm@ruuma.id", name: "Counter Menara Matahari", role: "counter", storeCodes: []string{"RMA-MM"}},
 }
 
 // seedStaffPassword returns the password the demo accounts get. It is read
