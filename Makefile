@@ -112,12 +112,13 @@ web-dev: ## dev server on 127.0.0.1:5173 (this machine only)
 	cd $(ROOT)/web && npm run dev
 
 # This box is headless, so the browser is always on another machine. Binding
-# wide is only safe because ufw allows 5173 from the LAN subnet alone — keep
-# that rule in place (docs/11 §6).
+# wide does nothing on its own — ufw denies 5173 — and the dev server has no
+# auth, so prefer `web-dev` + an SSH tunnel, or `uat` for real testers
+# (docs/11 §6).
 WEB_DEV_HOST ?= 0.0.0.0
 
 .PHONY: web-dev-lan
-web-dev-lan: ## dev server reachable from the LAN (see docs/11 §6)
+web-dev-lan: ## dev server bound wide; needs a ufw rule to be reachable (docs/11 §6)
 	cd $(ROOT)/web && npm run dev -- --host $(WEB_DEV_HOST)
 
 .PHONY: web-build
@@ -131,6 +132,10 @@ web-test:
 .PHONY: web-audit
 web-audit: ## dependency gate: fails on any unaccepted high/critical advisory
 	cd $(ROOT)/web && npm run audit
+
+.PHONY: uat
+uat: web-build ## publish the built SPA for LAN testers (docs/11 §7) — needs sudo
+	sudo $(ROOT)/scripts/uat-deploy.sh
 
 # ── dev environment ───────────────────────────────────────────────────────────
 .PHONY: up

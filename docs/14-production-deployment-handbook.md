@@ -472,7 +472,8 @@ server {
 
     client_max_body_size 8m;   # payment proofs and menu photos
 
-    location /api/ {
+    # ^~ so the static-asset regex cannot hijack an API path ending in .js/.css.
+    location ^~ /api/ {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;
@@ -501,7 +502,8 @@ server {
     index index.html;
     client_max_body_size 10m;
 
-    location /api/ {
+    # ^~ so the static-asset regex cannot hijack an API path ending in .js/.css.
+    location ^~ /api/ {
         proxy_pass http://127.0.0.1:8080;
         proxy_set_header Host              $host;
         proxy_set_header X-Real-IP         $remote_addr;

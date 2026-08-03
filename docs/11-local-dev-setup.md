@@ -58,6 +58,7 @@ make test-e2e        # end-to-end journey
 make test-security   # authz, IDOR, rate-limit, injection, JWT
 make check           # vet + staticcheck + gosec + govulncheck + npm audit
 make web-build       # production SPA build
+make uat             # publish that build on port 80 for LAN testers (§7)
 ```
 
 ## 4. Services and ports
@@ -144,11 +145,55 @@ loopback, so the dev server never has to bind a public interface at all.
 If `http://192.168.88.101/` (port 80, already allowed in ufw) also fails from
 your laptop, the block is upstream of the server and only the tunnel will work.
 
-## 7. Editor
+## 7. UAT on the local network
+
+For user-acceptance testing, do **not** expose the Vite dev server. Serve the
+production build through nginx instead:
+
+```bash
+cd /home/dev/projects/ruuma
+make uat            # web-build, then sudo scripts/uat-deploy.sh
+```
+
+Testers then open `http://192.168.88.101/` for the customer site and
+`http://192.168.88.101/admin` to sign in as staff. **No firewall change is
+needed** — ufw already allows port 80 from anywhere, which is the main reason
+this route beats opening 5173.
+
+Why the production build rather than the dev server:
+
+| | Vite dev server | nginx + `web-build` |
+|---|---|---|
+| Firewall | needs a new ufw rule for 5173 | port 80 already open |
+| Serves source | yes, over `/@fs` | no, minified bundle only |
+| What testers exercise | unminified dev build with HMR | the artefact that ships |
+| Bugs found | can differ from production | representative |
+
+`scripts/uat-deploy.sh` publishes `web/dist` to `/opt/ruuma/web` — the same path
+the production handbook uses — installs
+`deploy/nginx/ruuma-uat.conf` as the `ruuma` site, and stands the stock
+`default` site down so the bare IP reaches ruuma without a DNS entry. It keeps
+the previous build at `/opt/ruuma/web.previous` and the previous nginx config at
+`/etc/nginx/sites-available/ruuma.pre-uat`; the rollback commands are printed
+when it finishes.
+
+To publish a new build during UAT, run `make uat` again.
+
+Sign-in works over plain HTTP because the SPA holds its JWT in `localStorage`
+and sends it as an `Authorization: Bearer` header
+(`/home/dev/projects/ruuma/web/src/lib/api.ts`) — there is no `Secure` cookie to
+be dropped. That also means **LAN traffic is readable**: use seeded demo data
+for UAT, never real customer records.
+
+Staff accounts come from `make seed`, which prints the password once. If it has
+scrolled away, re-seed with `SEED_PASSWORD` set in the environment or mint an
+account with `/usr/local/go/bin/go run ./cmd/api create-owner`.
+
+## 8. Editor
 
 Use `vi` in runbooks and shell instructions.
 
-## 8. Notes carried from SCHOOLCATERING
+## 9. Notes carried from SCHOOLCATERING
 
 - If a compose port cannot bind, publish on a different host port and point tests
   at it via an env var rather than editing hard-coded values.
