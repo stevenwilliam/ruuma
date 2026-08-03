@@ -141,7 +141,16 @@ function AdminLogin({ onSignedIn }: { onSignedIn: (staff: Staff) => void }) {
 
   return (
     <div className="mx-auto flex min-h-dvh max-w-sm flex-col justify-center gap-4 px-4">
-      <img src="/brand/ruuma-logo-emerald.png" alt="Ruuma" width={140} height={72} className="h-10 w-auto" />
+      {/* self-start: a flex item in a column container is stretched to the
+          cross-axis width by default, which overrides w-auto and distorts the
+          wordmark. Same fix as the customer footer. */}
+      <img
+        src="/brand/ruuma-logo-emerald.png"
+        alt="Ruuma"
+        width={140}
+        height={72}
+        className="h-10 w-auto self-start"
+      />
       <h1 className="font-display text-xl font-bold">Admin</h1>
       {error && <ErrorNote>{error}</ErrorNote>}
       <Card>

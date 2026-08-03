@@ -78,12 +78,16 @@ export function CustomerLayout() {
 
       <footer className="mt-10 bg-primary text-primary-fg">
         <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-8 text-xs">
+          {/* self-start is load-bearing: this is a flex item in a COLUMN
+              container, where the default align-items: stretch stretches it
+              along the cross axis — the width — and silently overrides
+              w-auto. That is what distorted the wordmark. */}
           <img
             src="/brand/ruuma-logo-white.png"
             alt={copy.brand}
             width={112}
             height={58}
-            className="mb-2 h-7 w-auto"
+            className="mb-2 h-7 w-auto self-start"
           />
           <p>{copy.footer.cuisines}</p>
           <p className="text-primary-fg/80">{copy.footer.rights}</p>

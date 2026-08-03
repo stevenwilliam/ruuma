@@ -40,6 +40,15 @@ than being binary files nobody can reproduce (D31):
 /usr/local/go/bin/go run ./tools/genassets
 ```
 
+**Placing the wordmark: give it `self-start` inside a column flex container.**
+`h-* w-auto` alone does not protect the aspect ratio there. A flex item is
+stretched along the cross axis by default, and in a `flex-col` the cross axis
+is the *width* — so `align-items: stretch` silently overrides `w-auto` and
+pulls the logo out to the full container width against a pinned height. This
+distorted both the customer footer and the admin sign-in page. Row containers
+using `items-center` are unaffected, which is why the two headers never showed
+it.
+
 **The icons must stay square.** The wordmark is 1.94:1, and a browser handed a
 non-square favicon squashes it into its square slot — which is why the logo
 looked stretched in the tab. The generator pads it onto a square canvas at 12%
