@@ -62,11 +62,32 @@ nginx -t
 systemctl reload nginx
 
 echo "==> checking"
-if ! curl -fsS -o /dev/null "http://127.0.0.1/"; then
+# `systemctl reload` returns as soon as nginx is signalled, not when the new
+# workers are live. Checking immediately races the old workers, which still
+# answer from the previous config — that looks like a 404 from the stock
+# default site and reads as a broken deploy when nothing is wrong. Retry.
+wait_for() {
+    local url=$1 tries=${2:-10}
+    for ((i = 0; i < tries; i++)); do
+        if curl -fsS -o /dev/null --max-time 3 "${url}"; then
+            return 0
+        fi
+        sleep 0.5
+    done
+    return 1
+}
+
+if ! wait_for "http://127.0.0.1/"; then
     echo "error: nginx is not serving the SPA" >&2
     exit 1
 fi
-if ! curl -fsS -o /dev/null "http://127.0.0.1/api/v1/stores"; then
+# Distinguish "the SPA is up but stale" from a genuinely working deploy: the
+# index served must be the build we just published, not a cached welcome page.
+if ! curl -fsS --max-time 3 "http://127.0.0.1/" | grep -q "Ruuma Eatery"; then
+    echo "error: port 80 answered, but not with the ruuma SPA" >&2
+    exit 1
+fi
+if ! wait_for "http://127.0.0.1/api/v1/stores"; then
     echo "warning: /api/v1/stores did not answer — is the API up? (make run)" >&2
 fi
 
