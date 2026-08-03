@@ -6,6 +6,15 @@ ROOT   := /home/dev/projects/ruuma
 
 export PATH := /usr/local/go/bin:/home/dev/go/bin:$(PATH)
 
+# internal/platform/config reads the environment and nothing else — there is no
+# dotenv loader — so every target that starts the binary has to source .env
+# itself. Skip it and the command dies with:
+#   ruuma: config: missing required environment: DATABASE_URL, JWT_SIGNING_KEY
+# Must stay on the same line as the command it feeds: make gives each recipe
+# line its own shell, so exports do not survive to the next one.
+ENV_FILE ?= $(ROOT)/.env
+LOAD_ENV  = set -a; . $(ENV_FILE); set +a;
+
 .PHONY: help
 help: ## show this help
 	@grep -hE '^[a-zA-Z_-]+:.*?## ' $(MAKEFILE_LIST) | awk 'BEGIN{FS=":.*?## "}{printf "  \033[36m%-22s\033[0m %s\n", $$1, $$2}'
@@ -17,40 +26,51 @@ build: ## build the API binary
 
 .PHONY: run
 run: ## run the API
-	$(GO) run ./cmd/api serve
+	$(LOAD_ENV) $(GO) run ./cmd/api serve
 
 .PHONY: worker
 worker: ## run the background worker
-	$(GO) run ./cmd/api worker
+	$(LOAD_ENV) $(GO) run ./cmd/api worker
 
 .PHONY: migrate
 migrate: ## apply migrations
-	$(GO) run ./cmd/api migrate
+	$(LOAD_ENV) $(GO) run ./cmd/api migrate
 
 .PHONY: migrate-down
 migrate-down: ## roll back one migration (dev only)
-	$(GO) run ./cmd/api migrate --down 1
+	$(LOAD_ENV) $(GO) run ./cmd/api migrate --down 1
 
 .PHONY: seed
 seed: ## load demo data (3 stores, menu, staff for every role)
-	$(GO) run ./cmd/api seed
+	$(LOAD_ENV) $(GO) run ./cmd/api seed
+
+# `seed` only creates staff that do not exist yet (cmd/api/seed.go), so it can
+# never reset a password. This is the way back in when one is lost.
+.PHONY: create-owner
+create-owner: ## create an owner: make create-owner EMAIL=you@ruuma.id PASSWORD='min 12 chars'
+	@test -n "$(EMAIL)" || { echo "usage: make create-owner EMAIL=you@ruuma.id PASSWORD='min 12 chars'"; exit 1; }
+	$(LOAD_ENV) $(GO) run ./cmd/api create-owner \
+		--email '$(EMAIL)' --name '$(NAME)' \
+		$(if $(PASSWORD),--password '$(PASSWORD)',) $(if $(FORCE),--force,)
+NAME ?= Owner
 
 # ── tests ─────────────────────────────────────────────────────────────────────
 .PHONY: test
 test: ## unit tests (pure, no I/O)
 	$(GO) test -race -count=1 $(PKG)
 
+# The tagged suites need TEST_DATABASE_URL, which lives in .env like the rest.
 .PHONY: test-integration
 test-integration: reset-testdb ## integration tests against ruuma_test
-	$(GO) test -race -count=1 -tags=integration ./internal/adapter/... ./test/integration/...
+	$(LOAD_ENV) $(GO) test -race -count=1 -tags=integration ./internal/adapter/... ./test/integration/...
 
 .PHONY: test-e2e
 test-e2e: reset-testdb ## end-to-end journey
-	$(GO) test -count=1 -tags=e2e ./test/e2e/...
+	$(LOAD_ENV) $(GO) test -count=1 -tags=e2e ./test/e2e/...
 
 .PHONY: test-security
 test-security: reset-testdb ## authz, IDOR, rate-limit, injection, JWT, uploads
-	$(GO) test -count=1 -tags=security ./test/security/...
+	$(LOAD_ENV) $(GO) test -count=1 -tags=security ./test/security/...
 
 .PHONY: test-all
 test-all: test test-integration test-security test-e2e ## everything
