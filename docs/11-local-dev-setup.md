@@ -93,13 +93,27 @@ make web-dev-lan     # binds 0.0.0.0:5173 instead of 127.0.0.1:5173
 ```
 
 That alone is not enough: ufw defaults to deny-incoming and 5173 is not in the
-allow list. Open it **to the LAN subnet only** — never `Anywhere`, because the
-Vite dev server has no authentication and serves project source:
+allow list.
+
+**Check the source address first.** Developer laptops are not on the server's
+`192.168.88.0/24` — they reach the box through a router that NATs them, and the
+server sees `172.16.0.1`. A rule written against the wrong subnet silently fails
+to match. Confirm what your own connection looks like:
 
 ```bash
-sudo ufw allow from 192.168.88.0/24 to any port 5173 proto tcp \
-  comment 'ruuma vite dev (LAN only)'
+ss -tnH state established '( sport = :22 )'
+# 192.168.88.101:22 <- 172.16.0.1:50779   <- the address to allow
 ```
+
+Then open the port to **that address only** — never `Anywhere`, because the Vite
+dev server has no authentication and serves project source over `/@fs`:
+
+```bash
+sudo ufw allow from 172.16.0.1 to any port 5173 proto tcp comment 'ruuma vite dev'
+```
+
+Avoid `172.16.0.0/12`: it swallows the Docker bridges (`172.17.0.0/16`,
+`172.18.0.0/16`) and would expose the dev server to every container.
 
 Then browse `http://192.168.88.101:5173`. The `/api` proxy in
 `/home/dev/projects/ruuma/web/vite.config.ts` still points at `127.0.0.1:8080`,
@@ -108,15 +122,27 @@ which resolves on the server side, so the API needs no extra exposure.
 `WEB_DEV_HOST` overrides the bind address if `0.0.0.0` is too wide — for example
 `make web-dev-lan WEB_DEV_HOST=192.168.88.101` keeps it off the Docker bridges.
 
-The alternative that changes nothing on the server is an SSH tunnel from your
-own machine, which is the better choice on an untrusted network:
+Close the port again when you are done:
+
+```bash
+sudo ufw delete allow from 172.16.0.1 to any port 5173 proto tcp
+```
+
+### Preferred: an SSH tunnel
+
+This changes nothing on the server, needs no sudo, and works even when the path
+between laptop and server permits nothing but port 22 — which is the common
+case, and the reason the ufw route often fails for reasons ufw cannot fix:
 
 ```bash
 ssh -L 5173:127.0.0.1:5173 dev@192.168.88.101   # then browse http://localhost:5173
 ```
 
-Close the port again when you are done: `sudo ufw delete allow from
-192.168.88.0/24 to any port 5173 proto tcp`.
+Pair it with plain `make web-dev` — the tunnel terminates on the server's
+loopback, so the dev server never has to bind a public interface at all.
+
+If `http://192.168.88.101/` (port 80, already allowed in ufw) also fails from
+your laptop, the block is upstream of the server and only the tunnel will work.
 
 ## 7. Editor
 

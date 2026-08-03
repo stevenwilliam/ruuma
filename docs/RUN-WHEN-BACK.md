@@ -31,13 +31,20 @@ In a second terminal:
 
 ```bash
 cd /home/dev/projects/ruuma
-make web-dev-lan  # http://192.168.88.101:5173 — see docs/11 §6
+make web-dev      # 127.0.0.1:5173
 ```
 
 `claudedev` is headless, so `127.0.0.1:5173` is only reachable from the box
-itself. `make web-dev-lan` binds `0.0.0.0`, and ufw needs the port opened to the
-LAN subnet once (`docs/11-local-dev-setup.md` §6 has the exact rule). Use plain
-`make web-dev` plus an SSH tunnel instead if the network is untrusted.
+itself. Tunnel it from the machine that has the browser:
+
+```bash
+ssh -L 5173:127.0.0.1:5173 dev@192.168.88.101   # then browse http://localhost:5173
+```
+
+`make web-dev-lan` binds `0.0.0.0` instead, but then ufw has to allow the port
+from the laptop's *NAT source address* — which is `172.16.0.1`, not the server's
+own `192.168.88.0/24` subnet. `docs/11-local-dev-setup.md` §6 has the detail;
+the tunnel is the less fragile option.
 
 The seed prints a generated staff password — sign in to the admin at
 `/admin` with `owner@ruuma.id` and that password. It is shown once and not
