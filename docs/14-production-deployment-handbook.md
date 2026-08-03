@@ -491,6 +491,15 @@ server {
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
+
+    # index.html is the one file with a stable name; every asset it references
+    # carries a content hash. Cache it and a returning browser asks for asset
+    # hashes that §12's release step has already deleted — a blank page that
+    # only a manual cache clear fixes. Never cache it.
+    location = /index.html {
+        expires -1;
+        add_header Cache-Control "no-store, must-revalidate";
+    }
 }
 
 # Admin site — a separate host, matching the separate router group in the API.
@@ -512,6 +521,11 @@ server {
     }
 
     location / { try_files $uri $uri/ /index.html; }
+
+    location = /index.html {
+        expires -1;
+        add_header Cache-Control "no-store, must-revalidate";
+    }
 }
 EOF
 

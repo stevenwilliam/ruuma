@@ -41,11 +41,13 @@ find "${DEST}" -type d -exec chmod 0755 {} +
 find "${DEST}" -type f -exec chmod 0644 {} +
 
 echo "==> installing ${CONF_DEST}"
-# Keep whatever was there before; the API-only proxy block is worth being able
-# to put back if UAT is abandoned.
-if [[ -f "${CONF_DEST}" ]] && ! cmp -s "${CONF_SRC}" "${CONF_DEST}"; then
+# Keep whatever was there before UAT started; the API-only proxy block is worth
+# being able to put back if UAT is abandoned. Only ever written once: a second
+# run would otherwise overwrite that original with the UAT config itself and
+# quietly destroy the thing the backup exists for.
+if [[ -f "${CONF_DEST}" && ! -f "${CONF_DEST}.pre-uat" ]]; then
     cp -a "${CONF_DEST}" "${CONF_DEST}.pre-uat"
-    echo "    previous config saved as ${CONF_DEST}.pre-uat"
+    echo "    pre-UAT config saved as ${CONF_DEST}.pre-uat"
 fi
 cp "${CONF_SRC}" "${CONF_DEST}"
 ln -sfn "${CONF_DEST}" /etc/nginx/sites-enabled/ruuma
