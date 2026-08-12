@@ -128,56 +128,45 @@ Colour is never the only signal: a full slot carries a reason string, a warning
 state carries an icon and text, and dietary/allergen tags are labelled, not
 colour-coded alone.
 
-### 2.1 Ambient background wash
+### 2.1 Page backdrop
 
-The page canvas is not flat. Behind everything sit two fixed layers on
-`body::before` / `body::after`:
+A photograph, not a gradient: nasi padang on a warung table, fetched from
+Wikimedia Commons by `tools/dishphotos` under **CC BY-SA 4.0** and credited at
+`/credits` alongside the dish photos (D31). It lives at
+`web/public/brand/backdrop.jpg`, 1920×1080, and is fetched as the pseudo-SKU
+`BG-HERO`.
 
 | Token | Light | Dark | What it is |
 |---|---|---|---|
-| `--wash-emerald` | `rgba(168,222,206,.35)` | `rgba(18,60,52,.45)` | two of the three radial pools |
-| `--wash-sand` | `rgba(242,206,158,.30)` | `rgba(58,44,24,.35)` | one warm pool, so a food page does not read clinical |
-| `--grain-opacity` | `0.03` | `0.04` | inline SVG turbulence over the whole viewport |
+| `--scrim` | `rgba(247,249,248,.82)` | `rgba(13,21,18,.86)` | flat overlay between the photo and the page |
+| `--grain-opacity` | `0.03` | `0.03` | inline SVG turbulence, hides JPEG blocking under the scrim |
+| `--surface-card` | `rgba(255,255,255,.72)` | `rgba(20,32,28,.72)` | translucent cards |
 
-**The pools are picked by luminance direction, and that is the whole trick.**
-Dark text only loses contrast when the background gets *darker*, so in light
-mode the pools are light and saturated — a soft mint and a soft peach — and run
-at 30–35% while the AA table barely moves. Dark mode inverts it: pools deeper
-than `--bg`, so light text never loses.
+**The scrim is the safety mechanism, and it is measured against the extremes,
+not against this image.** `scripts/contrast.py` composites the scrim over a
+pure-black and a pure-white pixel and takes the worse of the two, so the AA
+guarantee holds for *any* photograph dropped in later — including ruuma's own
+kitchen photography when it replaces this one. Do not thin it without re-running
+the script.
 
-The first version used `--primary` itself at 7%. Emerald is darker than `--bg`,
-so it paid contrast on every percent and was still invisible — it shifted the
-canvas by 36/765 and shipped looking like a flat page. Colour, not opacity, is
-what makes a wash readable. `scripts/contrast.py` now reports that shift and
-warns below 60/765.
+Worst case: light spans `#C4C6C5`–`#F1F3F2`, dark `#121917`–`#353C39`. Body
+text 10.45 / 9.77, muted 5.14 / 5.13, `--primary-ink` 4.57 / 5.11. On a card,
+everything is above 6.8.
 
-The grain is not decoration for its own sake: a gradient this large bands
-visibly on an 8-bit panel without it, and it supplies the handmade warmth a
-restaurant wants and a dashboard does not.
+**Cards are translucent so the photograph reads through the content.** This is
+the fix for three failed attempts: the backdrop paints at `z-index:-1`, behind
+an emerald header, an emerald footer and a grid of cards. With opaque cards it
+only showed in the gutters — a few percent of a phone screen — so strengthening
+it changed nothing visible. `--surface` stays opaque for inputs and the sticky
+bar, which sit over *scrolling content* and would smear if translucent.
 
-**These alphas are a contrast budget, not a taste setting.** Every ratio in the
-table above is measured against `--bg`, and the wash sits between `--bg` and the
-text. The worst case is all three pools overlapping plus grain, which composites
-to `#C8DCCB` in light and `#223931` in dark. Against those:
+`position: fixed` on the layer, never `background-attachment: fixed` — the
+latter forces a full repaint per scroll frame on mobile and is a classic cause
+of scroll jank.
 
-| Foreground | On worst-case wash | Verdict |
-|---|---|---|
-| `--text` | 12.41 (light) / 10.61 (dark) | pass |
-| `--text-muted` | 4.80 / 5.57 | pass |
-| `--primary-ink` | 5.43 / 5.55 | pass |
-| `--primary` **as text** | 4.05 / 4.23 | **fails** — use `--primary-ink` |
-
-Two consequences, both already applied:
-
-- `--text-muted` was darkened from `#5A6B65` to `#4E5D58`. At the old value the
-  worst case was 3.69 and the wash broke AA outright.
-- `--primary-ink` exists because `--primary` is sampled from the logo (D20) and
-  cannot move. The fill stays exactly as it was; emerald *text* uses the ink
-  instead. It is not a new colour — it is the existing `--primary-hover` shade,
-  named for its second job.
-
-Raising any wash alpha means re-running that budget. The figures come from
-`scripts/contrast.py`.
+**Cost:** 466 KB on first load, cached immutably thereafter. Worth revisiting
+with AVIF/WebP and a `<picture>`-style swap if mobile load time becomes a
+concern.
 
 ### 2.2 Motion
 

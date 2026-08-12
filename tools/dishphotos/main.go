@@ -43,6 +43,7 @@ import (
 const (
 	root      = "/home/dev/projects/ruuma"
 	outDir    = root + "/web/public/dish"
+	brandDir  = root + "/web/public/brand"
 	creditsTo = root + "/web/src/credits.json"
 
 	cardW, cardH = 1200, 900
@@ -61,7 +62,23 @@ const (
 // Whatever lands here still has to be looked at. A search for "iced tea"
 // happily returns diagrams and bottle labels, and only a human can tell that
 // from a glass of tea.
+// targets says where a fetched image lands and at what size. Anything not
+// listed here is a 4:3 menu card in outDir. The page backdrop is the one
+// exception: it is 16:9, it lives with the brand assets rather than the dishes,
+// and it must never be picked up by the menu grid.
+var targets = map[string]struct {
+	path string
+	w, h int
+}{
+	"BG-HERO": {brandDir + "/backdrop.jpg", 1920, 1080},
+}
+
 var picks = map[string]string{
+	// The page backdrop (docs/10 §2.1). Nasi padang laid out on a warung
+	// table: authentically Indonesian, natively 16:9 at 5120x2880, and CC
+	// BY-SA 4.0 — commercial use permitted, attribution required, which
+	// /credits already renders.
+	"BG-HERO": "Nasi Padang dishes at Simpang Raya Jam Gadang Restaurant - Guguk Panjang, Bukit Tinggi, West Sumatra.jpg",
 	"IDN-001": "Nasi Goreng Kampung.jpg",
 	"IDN-002": "Ayam bakar.jpg",
 	"IDN-003": "Beef rendang.jpg",
@@ -89,6 +106,7 @@ var picks = map[string]string{
 // Indonesian dish names are used untranslated where Commons files are indexed
 // that way — "sate ayam" finds satay, "chicken satay" finds rather less.
 var searchFor = map[string]string{
+	"BG-HERO": "nasi padang table dishes",
 	"IDN-001": "nasi goreng",
 	"IDN-002": "ayam bakar grilled chicken",
 	"IDN-003": "rendang",
@@ -114,12 +132,12 @@ var searchFor = map[string]string{
 
 // credit is what the licence obliges us to publish, per image.
 type credit struct {
-	SKU       string `json:"sku"`
-	File      string `json:"file"`
-	Author    string `json:"author"`
-	Licence   string `json:"licence"`
+	SKU        string `json:"sku"`
+	File       string `json:"file"`
+	Author     string `json:"author"`
+	Licence    string `json:"licence"`
 	LicenceURL string `json:"licence_url"`
-	SourceURL string `json:"source_url"`
+	SourceURL  string `json:"source_url"`
 }
 
 func main() {
@@ -189,8 +207,8 @@ func fetch(client *http.Client, sku, file string) (*credit, error) {
 			Pages map[string]struct {
 				Missing   *string `json:"missing"`
 				ImageInfo []struct {
-					ThumbURL     string `json:"thumburl"`
-					URL          string `json:"url"`
+					ThumbURL       string `json:"thumburl"`
+					URL            string `json:"url"`
 					DescriptionURL string `json:"descriptionurl"`
 					// Value is not always a string — Commons returns bare
 					// numbers for some fields, which makes a string-typed
@@ -229,7 +247,11 @@ func fetch(client *http.Client, sku, file string) (*credit, error) {
 		if err != nil {
 			return nil, err
 		}
-		if err := writeCard(filepath.Join(outDir, sku+".jpg"), img); err != nil {
+		path, outW, outH := filepath.Join(outDir, sku+".jpg"), cardW, cardH
+		if t, ok := targets[sku]; ok {
+			path, outW, outH = t.path, t.w, t.h
+		}
+		if err := writeCard(path, img, outW, outH); err != nil {
 			return nil, err
 		}
 
@@ -282,9 +304,9 @@ func download(client *http.Client, src string) (image.Image, error) {
 // writeCard centre-crops to 4:3 and scales to the card size. Cropping rather
 // than letterboxing: a band of grey around a photo looks like a broken image,
 // and food photographs are almost always centre-weighted.
-func writeCard(path string, src image.Image) error {
+func writeCard(path string, src image.Image, outW, outH int) error {
 	b := src.Bounds()
-	want := float64(cardW) / float64(cardH)
+	want := float64(outW) / float64(outH)
 	got := float64(b.Dx()) / float64(b.Dy())
 
 	crop := b
@@ -300,7 +322,7 @@ func writeCard(path string, src image.Image) error {
 		crop = image.Rect(b.Min.X, b.Min.Y+off, b.Max.X, b.Min.Y+off+h)
 	}
 
-	dst := image.NewRGBA(image.Rect(0, 0, cardW, cardH))
+	dst := image.NewRGBA(image.Rect(0, 0, outW, outH))
 	xdraw.CatmullRom.Scale(dst, dst.Bounds(), src, crop, xdraw.Src, nil)
 
 	f, err := os.Create(path) // #nosec G304 -- fixed path under the repo

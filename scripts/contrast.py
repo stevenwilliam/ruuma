@@ -48,18 +48,29 @@ def to_hex(c) -> str:
     return "#%02X%02X%02X" % tuple(int(round(x)) for x in c)
 
 
-def worst_case(bg, emerald, emerald_a, sand, sand_a, grain, grain_a):
-    """Three pools overlap — emerald, sand, emerald — then grain on top."""
-    c = bg
-    for fill, alpha in ((emerald, emerald_a), (sand, sand_a), (emerald, emerald_a)):
-        c = over(fill, alpha, c)
-    return over(grain, grain_a, c)
+def worst_case(scrim, scrim_a, grain, grain_a):
+    """The page backdrop is a photograph, so the worst case is not a fixed
+    colour — it is whichever extreme pixel the photo happens to put behind the
+    text. Both are checked, and the guarantee is the worse of the two, so it
+    holds for any image dropped in later (ruuma's own photography, eventually).
+    """
+    worst, worst_lum = None, None
+    for pixel in ((0, 0, 0), (255, 255, 255)):
+        c = over(scrim, scrim_a, pixel)
+        c = over(grain, grain_a, c)
+        # Keep the composite furthest from mid-grey in the unhelpful direction:
+        # simply test both and let the caller take the minimum ratio.
+        if worst is None:
+            worst, worst_lum = [c], None
+        else:
+            worst.append(c)
+    return worst
 
 
 THEMES = {
     "light": {
         "bg": rgb("f7f9f8"),
-        "wash": (rgb("a8dece"), 0.65, rgb("f2ce9e"), 0.58, rgb("000000"), 0.035),
+        "wash": (rgb("f7f9f8"), 0.82, rgb("000000"), 0.03),
         "foregrounds": {
             "--text": rgb("101915"),
             "--text-muted": rgb("414d49"),
@@ -72,7 +83,7 @@ THEMES = {
     },
     "dark": {
         "bg": rgb("0d1512"),
-        "wash": (rgb("123c34"), 0.70, rgb("3a2c18"), 0.60, rgb("ffffff"), 0.045),
+        "wash": (rgb("0d1512"), 0.86, rgb("ffffff"), 0.03),
         "foregrounds": {
             "--text": rgb("e8f0ec"),
             "--text-muted": rgb("9fb3ab"),
@@ -89,18 +100,19 @@ def main() -> int:
     failures = 0
 
     for name, theme in THEMES.items():
-        composite = worst_case(theme["bg"], *theme["wash"])
-        # How far the wash actually moves the canvas. A wash nobody can see is
-        # a wash that is not doing its job — the first version of this shifted
-        # --bg by 36/765 and read as a flat page.
-        shift = sum(abs(a - b) for a, b in zip(composite, theme["base"]))
-        print(f"\n{name.upper()} — worst-case background {to_hex(composite)} "
-              f"(shift {shift:.0f}/765 from {to_hex(theme['base'])})")
-        if shift < 60:
-            print("  NOTE  the wash is probably imperceptible at this strength")
+        composites = worst_case(*theme["wash"])
+        # How much of the photograph survives the scrim. A backdrop nobody can
+        # see is a backdrop that is not doing its job: three earlier versions
+        # of this shipped at 36/765 and read as a flat page.
+        visible = sum(abs(a - b) for a, b in zip(composites[0], composites[1]))
+        print(f"\n{name.upper()} — scrimmed backdrop spans "
+              f"{to_hex(composites[0])}..{to_hex(composites[1])} "
+              f"(photo range {visible:.0f}/765)")
+        if visible < 60:
+            print("  NOTE  the scrim is so thick the photograph is barely visible")
 
         for token, colour in theme["foregrounds"].items():
-            r = ratio(colour, composite)
+            r = min(ratio(colour, c) for c in composites)
             ok = r >= AA_BODY
             failures += not ok
             print(f"  {'PASS' if ok else 'FAIL'}  {token:<16} {r:5.2f}")
@@ -109,16 +121,16 @@ def main() -> int:
         # on a flat --surface. Checked separately because that is where most
         # body copy actually lives.
         card_fill, card_alpha = theme["card"]
-        card = over(card_fill, card_alpha, composite)
-        print(f"  card {to_hex(card)} (translucent surface over the wash)")
+        cards = [over(card_fill, card_alpha, c) for c in composites]
+        print(f"  card {to_hex(cards[0])}..{to_hex(cards[1])} (translucent over the backdrop)")
         for token, colour in theme["foregrounds"].items():
-            r = ratio(colour, card)
+            r = min(ratio(colour, c) for c in cards)
             ok = r >= AA_BODY
             failures += not ok
             print(f"  {'PASS' if ok else 'FAIL'}  {token:<16} {r:5.2f}  on card")
 
         for token, colour in theme["informational"].items():
-            r = ratio(colour, composite)
+            r = min(ratio(colour, c) for c in composites)
             note = "" if r >= AA_BODY else "  <- why --primary-ink exists"
             print(f"  ....  {token:<16} {r:5.2f}{note}")
 

@@ -54,48 +54,43 @@
   color-scheme: dark;
 }
 
-/* Ambient background wash — docs/10 §2.1.
-   Three radial pools: two green, one warm, so a food page does not read
-   clinical.
-   The pools are chosen by LUMINANCE DIRECTION, which is the whole trick. Dark
-   text only loses contrast when the background gets darker, so in light mode
-   the pools are light and saturated — a soft mint and a soft peach — and can
-   run at 58-65% alpha while the AA table still passes. The first version used
-   --primary itself at 7%, which is darker than --bg: it cost contrast on every
-   percent and was still invisible. Colour direction, not opacity, is what buys
-   the headroom.
-   Dark mode inverts the rule: the pools are deeper than --bg for the same
-   reason, so light text never loses. */
+/* Page backdrop — docs/10 §2.1.
+   A real photograph: nasi padang on a warung table, fetched from Wikimedia
+   Commons by tools/dishphotos under CC BY-SA 4.0 and credited at /credits like
+   every other photo on the site (D31).
+   Three earlier attempts at this were an abstract gradient wash. Two of them
+   were genuinely invisible; the third rendered but was still not what was
+   asked for. A "background picture" means a picture.
+   --scrim is the whole safety mechanism. It is thick enough that the composite
+   clears AA for every text token against ANY pixel of the photo — checked at
+   both extremes, black and white, so the guarantee does not depend on this
+   particular image and survives swapping it for ruuma's own photography.
+   Do not thin it without re-running scripts/contrast.py. */
 :root {
-  --wash-emerald: rgba(168, 222, 206, 0.65);
-  --wash-sand: rgba(242, 206, 158, 0.58);
-  --grain-opacity: 0.035;
-  /* Cards are translucent so the wash reads *through* the content, not only in
-     the gutters. This is the fix for the version that shipped invisible: the
-     wash paints at z-index -1, behind the page, and the page is an emerald
-     header, an emerald footer and a grid of solid white cards. On a phone that
-     left a few percent of the viewport where it could show at all. */
+  --scrim: rgba(247, 249, 248, 0.82);
+  --grain-opacity: 0.03;
+  /* Cards stay translucent so the photograph reads through the content rather
+     than only in the gutters — the mistake that made the previous version
+     invisible on a phone, where cards cover almost the whole viewport. */
   --surface-card: rgba(255, 255, 255, 0.72);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --wash-emerald: rgba(18, 60, 52, 0.7);
-    --wash-sand: rgba(58, 44, 24, 0.6);
-    --grain-opacity: 0.045;
+    --scrim: rgba(13, 21, 18, 0.86);
+    --grain-opacity: 0.03;
     --surface-card: rgba(20, 32, 28, 0.72);
   }
 }
 
 :root[data-theme='dark'] {
-  --wash-emerald: rgba(18, 60, 52, 0.7);
-  --wash-sand: rgba(58, 44, 24, 0.6);
-  --grain-opacity: 0.045;
+  --scrim: rgba(13, 21, 18, 0.86);
+  --grain-opacity: 0.03;
   --surface-card: rgba(20, 32, 28, 0.72);
 }
 
-/* The flat colour goes on html so it paints the canvas; body::before can then
-   sit at z-index -1 above it and still stay behind every bit of content. */
+/* The flat colour goes on html so it paints the canvas and shows instantly,
+   before the photograph has downloaded. */
 html {
   -webkit-text-size-adjust: 100%;
   background: var(--bg);
@@ -108,28 +103,30 @@ body {
   min-height: 100dvh;
 }
 
-/* The wash itself. Oversized by 15% on each side so the drift never exposes an
-   edge, and animated with transform alone — background-position would repaint
-   a full-viewport gradient every frame, which is exactly the wrong thing to
-   ask of the mid-range Android this menu is mostly read on. */
+/* The photograph, with its scrim as a second background layer on top of it.
+   position:fixed rather than background-attachment:fixed — the latter forces a
+   full repaint on every scroll frame on mobile and is one of the classic
+   causes of scroll jank.
+   inset:-12% gives the drift room; the layer is larger than the viewport so an
+   edge can never come into view. */
 body::before {
   content: '';
   position: fixed;
-  inset: -15%;
+  inset: -12%;
   z-index: -1;
   pointer-events: none;
-  background:
-    radial-gradient(42rem 42rem at 12% 8%, var(--wash-emerald), transparent 70%),
-    radial-gradient(38rem 38rem at 88% 22%, var(--wash-sand), transparent 68%),
-    radial-gradient(46rem 46rem at 65% 92%, var(--wash-emerald), transparent 72%);
-  animation: wash-drift 24s ease-in-out infinite alternate;
+  background-image:
+    linear-gradient(var(--scrim), var(--scrim)),
+    url('/brand/backdrop.jpg');
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+  animation: backdrop-drift 28s ease-in-out infinite alternate;
   will-change: transform;
 }
 
-/* Grain, at 3.5% light / 4.5% dark. It is what stops a large flat gradient
-   banding on an 8-bit panel, and it is the "handmade" half of the warmth — a
-   restaurant is not a dashboard. Inline SVG turbulence: no request, and CSP
-   allows data: under img-src. */
+/* Grain over the photograph: it hides the JPEG blocking that a heavy scrim
+   would otherwise make obvious in the flat areas. */
 body::after {
   content: '';
   position: fixed;
@@ -140,17 +137,15 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
-/* The travel is deliberately large. At 2% over 32s the movement was below the
-   threshold anyone notices — an animation nobody perceives is the same as no
-   animation, and it still costs a compositor layer. 6% over 24s is a slow
-   visible breath. inset:-15% on the layer is what keeps an edge from ever
-   entering the viewport at this amplitude. */
-@keyframes wash-drift {
+/* A slow Ken Burns push. Transform only — animating background-position would
+   repaint a full-viewport photograph every frame. 5% over 28s is a drift you
+   notice if you look and never notice if you do not. */
+@keyframes backdrop-drift {
   from {
     transform: translate3d(0, 0, 0) scale(1);
   }
   to {
-    transform: translate3d(-6%, 4%, 0) scale(1.12);
+    transform: translate3d(-5%, 3%, 0) scale(1.08);
   }
 }
 

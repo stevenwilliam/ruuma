@@ -89,10 +89,14 @@ export function CustomerLayout() {
           key={pathname} restarts the entrance on every route change, which is
           the whole page transition — no exit tween, because an exit blocks
           navigation and back/forward has to stay instant. */}
+      {/* pb-32 reserves the height of the floating contact button so the last
+          card in a list is never permanently sitting underneath it. A FAB
+          overlapping mid-scroll content is inherent to the pattern; content
+          you can never scroll clear of is a bug. */}
       <main
         key={pathname}
         id="main"
-        className="rise-in mx-auto w-full max-w-5xl flex-1 px-4 py-6"
+        className="rise-in mx-auto w-full max-w-5xl flex-1 px-4 pb-32 pt-6"
       >
         <Outlet />
       </main>
