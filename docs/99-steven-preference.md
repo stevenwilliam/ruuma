@@ -323,22 +323,33 @@ naming the docs it touched; `PROGRESS.md` is updated as work lands.
 
 ## 13. Claude Code tooling baseline
 
-Plugins come from the official marketplace, `claude-plugins-official`
-(`anthropics/claude-plugins-official`), and are installed at **user scope** so
-they carry across every project on the machine rather than being re-chosen per
-repo:
+Plugins are installed at **user scope** so they carry across every project on
+the machine rather than being re-chosen per repo:
 
 ```bash
 claude plugin install security-guidance@claude-plugins-official --scope user
-claude plugin install frontend-design@claude-plugins-official   --scope user
 claude plugin install gopls-lsp@claude-plugins-official          --scope user
+
+claude plugin marketplace add nextlevelbuilder/ui-ux-pro-max-skill
+claude plugin install ui-ux-pro-max@ui-ux-pro-max-skill --scope user
 ```
 
 | Plugin | Why it is in the baseline | Cost |
 | --- | --- | --- |
 | `security-guidance` | Four harness hooks — `SessionStart`, `UserPromptSubmit`, `PostToolUse`, `Stop`. Pattern warnings on every edit, LLM diff review on stop, agentic commit reviewer covering injection, XSS, SSRF, hardcoded secrets and 25+ other classes. This is **enforced by the harness, not by Claude's judgement**, which is what makes it worth having next to "auto-commit and push without asking" (section 2) — without it nothing stands between a generated secret and `origin/main`. | ~0 tokens (hooks are harness-only) |
-| `frontend-design` | One skill; produces distinctive, production-grade UI instead of generic AI-looking layouts. Pairs with the brand token set in `docs/10-*`. | ~59 tok always-on, ~2k per invocation |
+| `ui-ux-pro-max` | Seven skills over a local design database — 84 UI styles, 192 palettes, 74 font pairings, 98 UX guidelines, 161 reasoning rules, 25 chart types, 22 stacks. MIT, no network calls, no account; the ~1.2 MB of CSVs is queried on demand by local Python, never loaded into context. Chosen for the **UX rules and accessibility checks** — loading states, empty states, breakpoints, touch targets, focus states, ARIA — more than for its palette picker. | ~741 tok always-on, ~1.6–3.2k per skill invoked |
 | `gopls-lsp` | Go language server — compiler-accurate references, call hierarchies and implementations. Beats any heuristic index on a Go codebase. | LSP, no model context |
+
+**Run one design skill, not two.** Two design skills firing on the same task
+give conflicting direction and you cannot tell which produced a bad result.
+`ui-ux-pro-max` displaced Anthropic's `frontend-design` for that reason, not
+because `frontend-design` is weak — it is the better pick when the brand is
+already fixed and what you want is taste rather than a checklist. Swapping back
+is one command each way.
+
+Three of the seven skills — `banner-design`, `slides`, `brand` — are dead weight
+on a product codebase but only cost ~220 tokens of always-on description
+between them. Not worth forking the plugin over.
 
 **Skills are model-triggered, not automatic.** Claude sees only each skill's
 name and one-line description, and invokes it when the task matches; a slash
@@ -358,6 +369,10 @@ Deliberately **not** installed, and why:
 - **Commercial SaaS scanners** (`aikido`, `42crunch`, `stackhawk`,
   `sonatype-guide`, `vanta`) — all require paid accounts.
 - **`superdesign`** — sends codebase context to an external design canvas.
+- **`frontend-design`** (Anthropic) — installed then swapped out for
+  `ui-ux-pro-max`; see the one-design-skill rule above. Cheaper (~59 tok
+  always-on vs ~741) and better when the visual system is already decided, so
+  it is the obvious fallback if the database-driven approach grates.
 - **`graphify`** — knowledge-graph indexer. Its value starts around 150k+ LOC or
   where architecture is undocumented; a project built to section 4's layering
   with a written dependency rule already states what the graph would infer, and
