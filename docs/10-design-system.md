@@ -99,10 +99,11 @@ contrast-checked; the ratio is stated and all are ≥ 4.5:1 (WCAG AA for body te
 | `--surface` | `#FFFFFF` | `#14201C` | cards, sheets, menus |
 | `--border` | `#DCE5E1` | `#24352F` | hairlines, input borders |
 | `--text` | `#101915` | `#E8F0EC` | body text |
-| `--text-muted` | `#5A6B65` | `#9FB3AB` | secondary text, help |
+| `--text-muted` | `#4E5D58` | `#9FB3AB` | secondary text, help |
 | `--primary` | `#277066` | `#4FA695` | primary actions, links, brand |
 | `--primary-hover` | `#1F5B53` | `#6FBCAC` | hover/active on primary |
 | `--primary-fg` | `#FFFFFF` | `#0D1512` | text on a primary fill |
+| `--primary-ink` | `#1F5B53` | `#6FBCAC` | emerald as **text** — links, ghost buttons, badges |
 | `--primary-subtle` | `#E6F2EF` | `#17332C` | selected slot, badges, tints |
 | `--warning` | `#B45309` | `#F0B357` | "almost full" slots, ageing payments |
 | `--danger` | `#B3261E` | `#FF9A8A` | destructive actions, errors |
@@ -114,7 +115,8 @@ Verified ratios (foreground on background):
 | `#277066` on `#FFFFFF` / `#F7F9F8` | 5.84 / 5.52 |
 | `#FFFFFF` on `#277066` (primary button) | 5.84 |
 | `#101915` on `#FFFFFF` | 17.92 |
-| `#5A6B65` on `#FFFFFF` / `#F7F9F8` | 5.64 / 5.33 |
+| `#4E5D58` on `#FFFFFF` / `#F7F9F8` | 6.93 / 6.55 |
+| `#1F5B53` on `#FFFFFF` / `#F7F9F8` | 7.84 / 7.41 |
 | `#B45309` on `#FFFFFF` | 5.02 |
 | `#B3261E` on `#FFFFFF` | 6.54 |
 | `#4FA695` on `#0D1512` / `#14201C` | 6.37 / 5.76 |
@@ -125,6 +127,91 @@ Verified ratios (foreground on background):
 Colour is never the only signal: a full slot carries a reason string, a warning
 state carries an icon and text, and dietary/allergen tags are labelled, not
 colour-coded alone.
+
+### 2.1 Ambient background wash
+
+The page canvas is not flat. Behind everything sit two fixed layers on
+`body::before` / `body::after`:
+
+| Token | Light | Dark | What it is |
+|---|---|---|---|
+| `--wash-emerald` | `rgba(39,112,102,.07)` | `rgba(79,166,149,.10)` | two of the three radial pools, from `--primary` |
+| `--wash-sand` | `rgba(180,120,60,.05)` | `rgba(200,150,90,.05)` | one warm pool, so a food page does not read clinical |
+| `--grain-opacity` | `0.025` | `0.035` | inline SVG turbulence over the whole viewport |
+
+The grain is not decoration for its own sake: a gradient this large bands
+visibly on an 8-bit panel without it, and it supplies the handmade warmth a
+restaurant wants and a dashboard does not.
+
+**These alphas are a contrast budget, not a taste setting.** Every ratio in the
+table above is measured against `--bg`, and the wash sits between `--bg` and the
+text. The worst case is all three pools overlapping plus grain, which composites
+to `#D3DBD7` in light and `#293D35` in dark. Against those:
+
+| Foreground | On worst-case wash | Verdict |
+|---|---|---|
+| `--text` | 12.73 (light) / 10.01 (dark) | pass |
+| `--text-muted` | 4.92 / 5.26 | pass |
+| `--primary` **as text** | 4.15 / 3.99 | **fails** — use `--primary-ink` |
+
+Two consequences, both already applied:
+
+- `--text-muted` was darkened from `#5A6B65` to `#4E5D58`. At the old value the
+  worst case was 3.69 and the wash broke AA outright.
+- `--primary-ink` exists because `--primary` is sampled from the logo (D20) and
+  cannot move. The fill stays exactly as it was; emerald *text* uses the ink
+  instead. It is not a new colour — it is the existing `--primary-hover` shade,
+  named for its second job.
+
+Raising any wash alpha means re-running that budget. The figures come from
+`scripts/contrast.py`.
+
+### 2.2 Motion
+
+One tier only: **subtle**. Durations 200–400ms, ease-out
+(`cubic-bezier(.25,.46,.45,.94)`), travel capped at 12px so an entrance reads as
+a fade rather than a slide.
+
+| Utility | Where | Detail |
+|---|---|---|
+| `.rise-in` | `<main>`, keyed to the route | 350ms fade + 12px rise; the whole page transition |
+| `.stagger` | menu grid, keyed to filter/sort | same animation, 40ms apart, **capped at eight steps** |
+| `wash-drift` | `body::before` | 32s, `translate3d` + `scale(1.06)`, alternating |
+
+Rules that are not negotiable:
+
+- **Transform and opacity only.** The wash drifts by transform, never by
+  `background-position`, which would repaint a full-viewport gradient every
+  frame. This menu is mostly read on mid-range Android.
+- **No exit animation on navigation.** An exit tween delays the next page; back
+  and forward have to stay instant.
+- **The stagger caps at eight.** Past that, cards share the final 280ms delay.
+  Compounding it turns a choreographed list into one that looks slow to load.
+- **`prefers-reduced-motion` zeroes delays as well as durations**, and stops
+  `wash-drift` outright rather than running it imperceptibly. A zero duration
+  does not help if a 280ms delay survives it.
+- **The wash and grain are hidden in `@media print`** — they are fixed layers
+  and would otherwise tile a green cast across the kitchen's production sheet.
+
+### 2.3 Floating contact button
+
+A WhatsApp FAB sits bottom-right of every customer page, above the safe-area
+inset (`env(safe-area-inset-bottom)`, which is why `index.html` sets
+`viewport-fit=cover`). It is `z-40` — the same layer as the sticky header, never
+above it, so a future modal still wins.
+
+It is an inline SVG in WhatsApp's own `#25D366`, deliberately exempt from this
+palette: a recoloured mark stops reading as WhatsApp. The icon is
+`aria-hidden`; the link carries the accessible name from the message catalogue.
+
+Number, on/off and greeting come from `sys_parameters` (BR-1.4.5) — see
+`04-api-specification.md` for `GET /public-config`. **The button hides itself
+when the number is blank, whatever the enabled flag says.** A contact button
+that opens a chat with nobody is worse than no button: the customer believes
+they have asked, and waits.
+
+On the item page the sticky add-to-cart bar reserves `pe-20` up to the `xl`
+breakpoint so the FAB never covers the primary conversion control.
 
 ## 3. Typography
 
@@ -223,6 +310,17 @@ needs that route before it can appear here.
 
 Both are a full-bleed `--primary` fill with `--primary-fg` content, bracketing
 the page in brand colour. The header is sticky.
+
+**The footer is a sticky footer in the layout sense, not `position: fixed`.**
+The shell is a column flex container of `min-h-dvh`, `<main>` takes the slack
+with `flex-1`, and the footer lands at the bottom of the viewport on a short
+page (an empty cart, sign-in) and below the content on a long one.
+
+It is deliberately not pinned to the viewport: this footer carries the
+wordmark, the cuisine line, the copyright and the photo-credits link, and
+holding that much over the screen would eat the bottom of every phone — the
+space the menu grid and the checkout CTA need most. The floating contact button
+(§2.3) is the only thing that gets to sit over the page.
 
 Everything inside them has to be re-toned for the dark fill; the light-surface
 values are unreadable there:

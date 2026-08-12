@@ -13,6 +13,10 @@ export default {
         muted: 'var(--text-muted)',
         primary: 'var(--primary)',
         'primary-hover': 'var(--primary-hover)',
+        // Emerald as TEXT. --primary is the fill sampled from the logo (D20)
+        // and stays untouched; on the ambient wash it only reaches 4.15:1, so
+        // primary-coloured text uses this darker shade instead (docs/10 §2.1).
+        'primary-ink': 'var(--primary-ink)',
         'primary-fg': 'var(--primary-fg)',
         'primary-subtle': 'var(--primary-subtle)',
         warning: 'var(--warning)',

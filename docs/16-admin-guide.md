@@ -230,8 +230,31 @@ and is recorded with its before and after values.
 | Turn a message on or off | `notify.event.*_enabled` |
 | Which WhatsApp provider | `notify.provider` |
 | Finance ageing alarm | `finance.verification_sla_minutes` |
+| WhatsApp button on the website | `company.whatsapp_enabled` |
+| The number that button dials | `company.whatsapp_number` |
+| What the customer's message says | `company.whatsapp_message_id` / `_en` |
 
 Rates are in **basis points**: 1000 = 10%, 1150 = 11.5%.
+
+### Changing the WhatsApp number
+
+The green button at the bottom right of the customer site is
+`company.whatsapp_number`. Edit it under **Parameters** and it changes on the
+website within about half a minute — no deploy, no developer.
+
+Type the number however is natural: `+62 817-6315-568`, `0817 6315 568` and
+`628176315568` all work, because spaces, dashes, brackets and the `+` are
+stripped and a leading `0` is swapped for `62` before the link is built.
+
+Two things worth knowing:
+
+- **Clearing the number hides the button**, even if `company.whatsapp_enabled`
+  is still `true`. That is deliberate — a button that opens a chat with nobody
+  is worse than no button, because the customer thinks they have asked and then
+  waits for a reply that is not coming. To take the button down temporarily,
+  either works; to change numbers, just edit the number.
+- The greeting is the text already typed into the customer's WhatsApp when the
+  chat opens. Keep it short and let them add their own detail.
 
 Parameters marked **per store** can be overridden for one store under
 **Schedule → that store → Parameters**; anything unset falls back to the group

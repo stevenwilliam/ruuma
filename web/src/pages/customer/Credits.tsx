@@ -68,7 +68,7 @@ export default function CreditsPage() {
                       href={c.licence_url}
                       rel="noreferrer nofollow"
                       target="_blank"
-                      className="text-primary underline underline-offset-2"
+                      className="text-primary-ink underline underline-offset-2"
                     >
                       {c.licence}
                     </a>
@@ -81,7 +81,7 @@ export default function CreditsPage() {
                 href={c.source_url}
                 rel="noreferrer nofollow"
                 target="_blank"
-                className="text-sm font-medium text-primary underline underline-offset-4 sm:ml-auto"
+                className="text-sm font-medium text-primary-ink underline underline-offset-4 sm:ml-auto"
               >
                 {copy.credits.source}
               </a>

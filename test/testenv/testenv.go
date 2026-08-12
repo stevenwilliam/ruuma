@@ -245,7 +245,7 @@ func newEnv(t *testing.T, limits adapterhttp.Limits) *Env {
 		Catalog: catalogSvc, Orders: orderSvc, Payments: paymentSvc, Auth: authSvc,
 		Ops: opsSvc, Admin: adminSvc, Stores: storesPort, Staff: staffPort,
 		Customers: customersPort, PaymentsRead: paymentsPort,
-		Signer: env.Signer, Limiter: ratelimit.New(clk.Now),
+		Signer: env.Signer, Limiter: ratelimit.New(clk.Now), Params: env.Params,
 		// Permissive limits so a concurrency test measures capacity, not the
 		// throttle. The rate-limit rules themselves are proven in
 		// test/security/ratelimit_test.go with their real values.

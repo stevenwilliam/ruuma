@@ -25,7 +25,7 @@ export function SlotPicker({
         <button
           type="button"
           onClick={() => onSelect(firstBookable)}
-          className="self-start text-sm font-medium text-primary underline underline-offset-4"
+          className="self-start text-sm font-medium text-primary-ink underline underline-offset-4"
         >
           {copy.checkout.nextAvailable}: {slotLabel(firstBookable.starts_at, firstBookable.ends_at, timeZone)}
         </button>

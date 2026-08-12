@@ -9,10 +9,11 @@
   --surface: #ffffff;
   --border: #dce5e1;
   --text: #101915;
-  --text-muted: #5a6b65;
+  --text-muted: #4e5d58;
   --primary: #277066;
   --primary-hover: #1f5b53;
   --primary-fg: #ffffff;
+  --primary-ink: #1f5b53;
   --primary-subtle: #e6f2ef;
   --warning: #b45309;
   --danger: #b3261e;
@@ -29,6 +30,7 @@
     --primary: #4fa695;
     --primary-hover: #6fbcac;
     --primary-fg: #0d1512;
+    --primary-ink: #6fbcac;
     --primary-subtle: #17332c;
     --warning: #f0b357;
     --danger: #ff9a8a;
@@ -45,21 +47,129 @@
   --primary: #4fa695;
   --primary-hover: #6fbcac;
   --primary-fg: #0d1512;
+  --primary-ink: #6fbcac;
   --primary-subtle: #17332c;
   --warning: #f0b357;
   --danger: #ff9a8a;
   color-scheme: dark;
 }
 
-html { -webkit-text-size-adjust: 100%; }
+/* Ambient background wash — docs/10 §2.1.
+   Two very low-alpha pools derived from the existing palette: emerald from
+   --primary, and a warm sand that keeps a food page from reading clinical.
+   Alpha stays under 10% because every one of these sits *behind* body text —
+   the AA pairs in docs/10 are measured against --bg, and a wash heavy enough
+   to shift them would quietly break the table. */
+:root {
+  --wash-emerald: rgba(39, 112, 102, 0.07);
+  --wash-sand: rgba(180, 120, 60, 0.05);
+  --grain-opacity: 0.025;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    /* The dark surfaces are already near-black; the same alphas disappear
+       entirely, so the washes are lifted and cooled to stay perceptible. */
+    --wash-emerald: rgba(79, 166, 149, 0.10);
+    --wash-sand: rgba(200, 150, 90, 0.05);
+    --grain-opacity: 0.035;
+  }
+}
+
+:root[data-theme='dark'] {
+  --wash-emerald: rgba(79, 166, 149, 0.10);
+  --wash-sand: rgba(200, 150, 90, 0.05);
+  --grain-opacity: 0.035;
+}
+
+/* The flat colour goes on html so it paints the canvas; body::before can then
+   sit at z-index -1 above it and still stay behind every bit of content. */
+html {
+  -webkit-text-size-adjust: 100%;
+  background: var(--bg);
+}
 
 body {
-  background: var(--bg);
   color: var(--text);
   font-family: Inter, system-ui, sans-serif;
   margin: 0;
   min-height: 100dvh;
 }
+
+/* The wash itself. Oversized by 15% on each side so the drift never exposes an
+   edge, and animated with transform alone — background-position would repaint
+   a full-viewport gradient every frame, which is exactly the wrong thing to
+   ask of the mid-range Android this menu is mostly read on. */
+body::before {
+  content: '';
+  position: fixed;
+  inset: -15%;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(42rem 42rem at 12% 8%, var(--wash-emerald), transparent 70%),
+    radial-gradient(38rem 38rem at 88% 22%, var(--wash-sand), transparent 68%),
+    radial-gradient(46rem 46rem at 65% 92%, var(--wash-emerald), transparent 72%);
+  animation: wash-drift 32s ease-in-out infinite alternate;
+  will-change: transform;
+}
+
+/* Grain, at 2.5% light / 3.5% dark. It is what stops a large flat gradient
+   banding on an 8-bit panel, and it is the "handmade" half of the warmth — a
+   restaurant is not a dashboard. Inline SVG turbulence: no request, and CSP
+   allows data: under img-src. */
+body::after {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  opacity: var(--grain-opacity);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
+}
+
+@keyframes wash-drift {
+  from {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  to {
+    transform: translate3d(-2%, 1.5%, 0) scale(1.06);
+  }
+}
+
+/* Entrance motion, Subtle tier: 8–16px of travel so it reads as a fade rather
+   than a slide, ~350ms, ease-out. Anything longer stops feeling calm and
+   starts feeling slow. */
+@keyframes rise-in {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 12px, 0);
+  }
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+.rise-in {
+  animation: rise-in 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+
+/* Stagger for grids and lists. Capped at eight steps: 0.04s each keeps the
+   last card under 320ms, and beyond that a list stops feeling choreographed
+   and starts feeling like it is loading slowly. Cards past the eighth share
+   the final delay rather than compounding. */
+.stagger > * {
+  animation: rise-in 350ms cubic-bezier(0.25, 0.46, 0.45, 0.94) both;
+}
+.stagger > *:nth-child(1) { animation-delay: 0ms; }
+.stagger > *:nth-child(2) { animation-delay: 40ms; }
+.stagger > *:nth-child(3) { animation-delay: 80ms; }
+.stagger > *:nth-child(4) { animation-delay: 120ms; }
+.stagger > *:nth-child(5) { animation-delay: 160ms; }
+.stagger > *:nth-child(6) { animation-delay: 200ms; }
+.stagger > *:nth-child(7) { animation-delay: 240ms; }
+.stagger > *:nth-child(n + 8) { animation-delay: 280ms; }
 
 /* Focus is always visible — never removed for looks (docs/10 §4). */
 :where(a, button, input, select, textarea, [tabindex]):focus-visible {
@@ -75,10 +185,32 @@ body {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
+    /* Without this the stagger still holds the eighth card back by 280ms —
+       a duration of nothing does not help if the delay survives. The
+       animations use `both`, so zeroing them lands on the end state and the
+       content is simply there. */
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+  }
+
+  /* The drift is the one purely ambient motion on the page, so it stops
+     outright rather than running imperceptibly. */
+  body::before {
+    animation: none !important;
+    transform: none !important;
   }
 }
 
 @media print {
   .no-print { display: none !important; }
+  html { background: #fff; }
   body { background: #fff; color: #000; }
+
+  /* The wash and the grain are fixed layers, so without this they tile across
+     every printed page and put a green cast on the kitchen's production
+     sheet. */
+  body::before,
+  body::after {
+    display: none !important;
+  }
 }

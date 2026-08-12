@@ -181,5 +181,6 @@ export const en: typeof IDCatalog = {
     skipToContent: 'Skip to main content',
     languageToggle: 'Change language',
     themeToggle: 'Change theme',
+    whatsapp: 'Chat with us on WhatsApp',
   },
 }

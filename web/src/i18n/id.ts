@@ -180,5 +180,6 @@ export const id = {
     skipToContent: 'Lewati ke konten utama',
     languageToggle: 'Ganti bahasa',
     themeToggle: 'Ganti tema',
+    whatsapp: 'Hubungi kami lewat WhatsApp',
   },
 }

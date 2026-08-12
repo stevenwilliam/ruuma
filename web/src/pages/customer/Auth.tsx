@@ -125,7 +125,7 @@ export default function AuthPage() {
 
           <button
             type="button"
-            className="text-sm text-primary underline underline-offset-4"
+            className="text-sm text-primary-ink underline underline-offset-4"
             onClick={() => setMode(mode === 'signup' ? 'signin' : 'signup')}
           >
             {mode === 'signup' ? copy.auth.haveAccount : copy.auth.needAccount}

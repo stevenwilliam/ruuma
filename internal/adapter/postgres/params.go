@@ -58,6 +58,11 @@ var fallbacks = map[string]string{
 	"notify.provider":                       "log",
 	"notify.slot_reminder_minutes":          "60",
 	"finance.verification_sla_minutes":      "60",
+	// The button hides itself when the number is missing, so the fallback for
+	// the number is deliberately empty: a deleted row must not resurrect a
+	// hard-coded number that nobody answers.
+	"company.whatsapp_enabled": "true",
+	"company.whatsapp_number":  "",
 }
 
 // Reload refreshes the cache. Parameter changes take effect without a restart

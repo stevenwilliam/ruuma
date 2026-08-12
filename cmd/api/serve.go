@@ -28,6 +28,7 @@ func runServe(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 		Stores: a.storesPort, Staff: a.staffPort, Customers: a.customerPort,
 		PaymentsRead: a.paymentsPort,
 		Signer:       a.signer, Limiter: a.limiter, Limits: a.rateLimits(ctx),
+		Params:      a.params,
 		Idempotency: idempotencyAdapter{a.idem},
 		Log:         log, IsProduction: cfg.App.IsProduction(), Origins: cfg.App.AllowedOrigins,
 		Version: version, Commit: commit,

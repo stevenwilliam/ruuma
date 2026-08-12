@@ -35,6 +35,9 @@ type Deps struct {
 	PaymentsRead ports.Payments
 	Signer       *security.TokenSigner
 	Limiter      *ratelimit.Limiter
+	// Params backs GET /public-config. Reads go through the compiled
+	// allowlist in handlers_config.go, never the whole table.
+	Params ports.Params
 	// Limits are resolved from sys_parameters at boot (docs/04 §9). A zero
 	// value falls back to the compiled default in platform/ratelimit.
 	Limits       Limits
@@ -159,6 +162,9 @@ func (s *Server) registerPublic(g *gin.RouterGroup) {
 	g.GET("/menu", menuLimit, s.listMenu)
 	g.GET("/menu/:id", menuLimit, s.getMenuItem)
 	g.GET("/categories", menuLimit, s.listCategories)
+	// Site chrome (contact button, company name). Shares the menu limiter:
+	// it is the same kind of cheap read by an anonymous visitor.
+	g.GET("/public-config", menuLimit, s.publicConfig)
 	g.GET("/availability/dates", menuLimit, s.availableDates)
 	g.GET("/availability/slots", menuLimit, s.availableSlots)
 	g.POST("/cart/quote", rateLimit(s.Limiter, "quote", s.Limits.OrderCreate, bySubject), s.quoteCart)

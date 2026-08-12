@@ -70,6 +70,22 @@ and test names — every rule below must be traceable to at least one test
   **store value → group default in `sys_parameters` → compiled fallback**, and
   the compiled fallback exists only so a missing row cannot take the service
   down. The resolved value and its source are visible in admin.
+- **BR-1.4.5** A small, **explicitly allowlisted** subset of `sys_parameters` is
+  readable without authentication at `GET /api/v1/public-config`, so the
+  customer site can render chrome that an operator controls — today the company
+  name and the WhatsApp contact button (number, on/off, prefilled greeting).
+  - The allowlist is **compiled into the service**, never a column or flag on
+    the row. `sys_parameters` also holds notification templates, rate-limit
+    tuning and anything marked `is_secret`; a database-driven allowlist would
+    let one mistaken `UPDATE`, or one new row seeded with the wrong default,
+    publish a secret to the internet. Widening it is a code change and a review.
+  - The WhatsApp number is stored in E.164 digits. Whatever an operator types —
+    `+62 812…`, `0812…`, `(0812) …` — is normalised to that form before it is
+    served, because a malformed number produces a dead link with nothing to
+    tell the operator why.
+  - **A blank number disables the button regardless of the enabled flag.** The
+    two settings can disagree, and "switched on but unreachable" is the worse
+    failure: the customer believes they have made contact and waits.
 
 ### 1.5 Data listing
 

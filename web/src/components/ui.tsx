@@ -22,7 +22,7 @@ export function Button({
   const styles = {
     primary: 'bg-primary text-primary-fg hover:bg-primary-hover',
     secondary: 'border border-border bg-surface text-body hover:bg-primary-subtle',
-    ghost: 'text-primary hover:bg-primary-subtle',
+    ghost: 'text-primary-ink hover:bg-primary-subtle',
     danger: 'bg-danger text-white hover:opacity-90',
   }[variant]
   return (
@@ -154,7 +154,7 @@ export function Badge({
 }) {
   const styles = {
     neutral: 'border-border text-muted',
-    primary: 'border-primary bg-primary-subtle text-primary',
+    primary: 'border-primary bg-primary-subtle text-primary-ink',
     warning: 'border-warning text-warning',
     danger: 'border-danger text-danger',
   }[tone]

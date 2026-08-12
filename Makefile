@@ -89,7 +89,14 @@ cover: ## coverage report
 
 # ── quality & security ────────────────────────────────────────────────────────
 .PHONY: check
-check: vet staticcheck gosec govulncheck no-shell-out web-audit ## full quality + security gate
+check: vet staticcheck gosec govulncheck no-shell-out contrast web-audit ## full quality + security gate
+
+# The ambient wash sits between --bg and the text, so the ratios in the docs/10
+# palette table are not the ones that ship. This recomputes them against the
+# worst-case composite and fails if any drops under AA (docs/10 §2.1).
+.PHONY: contrast
+contrast: ## WCAG AA budget for the background wash
+	@python3 $(ROOT)/scripts/contrast.py
 
 .PHONY: vet
 vet:

@@ -93,7 +93,7 @@ export default function MenuPage() {
         </div>
         {/* Only offer a change when there is something to change to. */}
         {stores.length > 1 && (
-          <Link to="/stores" className="text-sm font-medium text-primary underline underline-offset-4">
+          <Link to="/stores" className="text-sm font-medium text-primary-ink underline underline-offset-4">
             {copy.stores.change}
           </Link>
         )}
@@ -153,7 +153,10 @@ export default function MenuPage() {
 
       {/* Two across on desktop, not three: the photo is what sells the dish,
           so it gets the space (docs/10 §4.2). */}
-      <ul className="grid gap-4 sm:grid-cols-2">
+      {/* The stagger is keyed to the filter/sort state, not just to mount:
+          re-running it on every result change is the feedback that the filter
+          did something, which a silently-swapped grid never gives. */}
+      <ul key={`${query}|${diet}|${sort}`} className="stagger grid gap-4 sm:grid-cols-2">
         {(items ?? []).map((item) => (
           <li key={item.id}>
             <Link to={`/menu/${item.id}`} className="block h-full">
@@ -239,7 +242,7 @@ function Chip({
       onClick={onClick}
       className={[
         'inline-flex min-h-[40px] items-center rounded-full border px-3 text-sm',
-        active ? 'border-primary bg-primary-subtle text-primary' : 'border-border text-body',
+        active ? 'border-primary bg-primary-subtle text-primary-ink' : 'border-border text-body',
       ].join(' ')}
     >
       {children}

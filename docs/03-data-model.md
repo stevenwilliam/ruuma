@@ -89,6 +89,22 @@ CREATE TABLE sys_parameters (
 CREATE INDEX idx_sys_parameters_key ON sys_parameters (key);
 ```
 
+Key groups in use: `scheduling.*`, `orders.*`, `pricing.*`, `fulfilment.*`,
+`auth.*`, `notify.*` (including `notify.template.*`), `finance.*`, `ratelimit.*`
+and `company.*`.
+
+`company.*` is the customer-facing contact set — `name`, `phone`, `email`,
+`address`, and since `0016` the WhatsApp button: `company.whatsapp_enabled`,
+`company.whatsapp_number` (E.164 digits, no `+`), `company.whatsapp_message_id`
+and `company.whatsapp_message_en`. All four are group-scoped
+(`is_store_overridable = false`), matching `company.phone` — the button is site
+chrome and appears on pages with no store context to resolve against.
+
+Four of these keys are readable unauthenticated through `GET /public-config`,
+but **the table carries no marker saying so** — the allowlist is compiled into
+the service (BR-1.4.5). A `is_public` column would put the decision one UPDATE
+away from publishing a secret.
+
 ### 2.2 `stores` — the tenancy root (BR-2.1.1)
 
 ```sql
@@ -857,12 +873,22 @@ CREATE TABLE idempotency_keys (
   auth → `0005` menu → `0006` availability → `0007` slots + delivery zones →
   `0008` promotions → `0009` orders, lines, options, events, redemptions →
   `0010` payments → `0011` cross-cutting + append-only triggers →
-  `0012` reference data (the `sys_parameters` defaults and message templates).
+  `0012` reference data (the `sys_parameters` defaults and message templates)
+  → `0013` notification body → `0014` staff subject type → `0015` rate-limit
+  parameters → `0016` WhatsApp contact parameters.
   Ordering is driven by foreign keys: `promotions` and `delivery_zones` precede
   `orders`, and `promotion_redemptions` follows it.
 - **Demo data is not a migration.** Three seed stores, the menu and the staff
   accounts are loaded by `cmd/api seed`, so a production deployment never
-  receives fake stores. Only reference data (`0012`) ships in the schema.
+  receives fake stores. Only reference data (`0012`, `0015`, `0016`) ships in
+  the schema.
+- **A reference-data migration must have `parameters` or `reference_data` in its
+  filename.** `db/embed.go` `DataMigrations()` selects them by that substring,
+  and `test/testenv` replays exactly those after it `TRUNCATE`s — the CASCADE
+  reaches `sys_parameters` through `updated_by`. Named anything else, the rows
+  vanish in the test database and the suite quietly exercises compiled fallbacks
+  instead of the real defaults. `0016_whatsapp_parameters` is named for that
+  reason, not for style.
 - **UUIDv7 in SQL:** PostgreSQL 18 provides `uuidv7()` natively, which is what
   the reference-data migration uses (BR-1.2.1). Application inserts use
   `platform/id`.

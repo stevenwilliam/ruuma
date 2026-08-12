@@ -1,10 +1,12 @@
 import { useEffect, useState } from 'react'
-import { Link, NavLink, Outlet } from 'react-router-dom'
+import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { cartCount, loadCart } from '../lib/cart'
+import { WhatsAppButton } from './WhatsAppButton'
 import { currentLang, setLang, t } from '../i18n'
 
 export function CustomerLayout() {
   const copy = t()
+  const { pathname } = useLocation()
   const [count, setCount] = useState(() => cartCount(loadCart()))
 
   useEffect(() => {
@@ -18,7 +20,16 @@ export function CustomerLayout() {
   }, [])
 
   return (
-    <div className="min-h-dvh">
+    // Sticky footer, the layout kind rather than position:fixed. A column flex
+    // container the height of the viewport, with <main> taking the slack, puts
+    // the footer at the bottom of the window on a short page (an empty cart,
+    // the sign-in screen) and below the content on a long one.
+    //
+    // Deliberately not `fixed`: this footer carries the wordmark, the cuisine
+    // line, the copyright and the photo-credits link, and pinning that much
+    // over the viewport would eat the bottom of every phone screen — the space
+    // the menu grid and the checkout CTA need most.
+    <div className="flex min-h-dvh flex-col">
       <a
         href="#main"
         className="sr-only focus:not-sr-only focus:absolute focus:left-3 focus:top-3 focus:z-50 focus:rounded-lg focus:bg-surface focus:px-3 focus:py-2"
@@ -72,10 +83,23 @@ export function CustomerLayout() {
         </div>
       </header>
 
-      <main id="main" className="mx-auto max-w-5xl px-4 py-6">
+      {/* w-full alongside max-w-5xl: as a flex item in a column container the
+          main would otherwise shrink to its content width.
+          key={pathname} restarts the entrance on every route change, which is
+          the whole page transition — no exit tween, because an exit blocks
+          navigation and back/forward has to stay instant. */}
+      <main
+        key={pathname}
+        id="main"
+        className="rise-in mx-auto w-full max-w-5xl flex-1 px-4 py-6"
+      >
         <Outlet />
       </main>
 
+      <WhatsAppButton />
+
+      {/* mt-10 keeps the gap on a long page; flex-1 on the main is what pushes
+          this down on a short one. */}
       <footer className="mt-10 bg-primary text-primary-fg">
         <div className="mx-auto flex max-w-5xl flex-col gap-1 px-4 py-8 text-xs">
           {/* self-start is load-bearing: this is a flex item in a COLUMN

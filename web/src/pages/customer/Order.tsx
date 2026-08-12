@@ -99,7 +99,7 @@ export default function OrderPage() {
 
           <div className="rounded-xl bg-primary-subtle p-3">
             <p className="text-xs uppercase tracking-wide text-muted">{copy.payment.exactAmount}</p>
-            <p className="tabular text-2xl font-bold text-primary">{rupiah(order.amount_due)}</p>
+            <p className="tabular text-2xl font-bold text-primary-ink">{rupiah(order.amount_due)}</p>
             <p className="pt-1 text-xs text-muted">
               {copy.payment.uniqueCodeNote.replace('{code}', String(order.unique_code))}
             </p>
@@ -155,7 +155,7 @@ export default function OrderPage() {
       )}
       {payment?.status === 'VERIFIED' && (
         <Card>
-          <p className="text-sm font-medium text-primary">{copy.payment.verified}</p>
+          <p className="text-sm font-medium text-primary-ink">{copy.payment.verified}</p>
         </Card>
       )}
 

@@ -53,6 +53,11 @@ _Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden
 - ✅ **UI write-path hardening (D34)** — every mutating control is an
       `AsyncButton`: one click one write, and a confirmation on anything
       irreversible. Six new tests in `web/src/__tests__/async-button.test.tsx`
+- ✅ **Public config endpoint (D35)** — `GET /api/v1/public-config` on a
+      compiled allowlist; 4 tests in `test/security/public_config_test.go`
+      including a planted-secret leak probe
+- ✅ **Contrast budget in the gate (D36)** — `make contrast` recomputes every
+      AA pair against the ambient wash, not against a flat `--bg`
 - ⚠️ **This section overstated itself between D31 and D34.** `gosec` had been
       failing on 5 findings in `tools/genassets` and `tools/dishphotos` since
       the dish-photography work landed, and `web-audit` was failing on the

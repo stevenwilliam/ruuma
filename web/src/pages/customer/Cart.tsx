@@ -32,7 +32,7 @@ export default function CartPage() {
       <div className="flex flex-col gap-4">
         <h1 className="font-display text-2xl font-bold">{copy.cart.title}</h1>
         <EmptyState>{copy.cart.empty}</EmptyState>
-        <Link to="/menu" className="text-sm font-medium text-primary underline underline-offset-4">
+        <Link to="/menu" className="text-sm font-medium text-primary-ink underline underline-offset-4">
           {copy.nav.menu}
         </Link>
       </div>

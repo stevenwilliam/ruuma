@@ -74,6 +74,29 @@ Stable codes include: `VALIDATION_FAILED`, `UNAUTHENTICATED`, `FORBIDDEN`,
 | GET | `/api/v1/availability/dates?store_id=&type=&month=` | bookable dates + a reason per unbookable date | BR-2.3.2 |
 | GET | `/api/v1/availability/slots?store_id=&date=&type=&items=` | slots with `remaining_orders`, `remaining_units`, `is_bookable`, `reason` | BR-2.3.5/6 |
 | POST | `/api/v1/cart/quote` | server-side pricing of a cart (lines, options, promo) | BR-2.5.x |
+| GET | `/api/v1/public-config` | allowlisted site chrome: company name, WhatsApp contact button | BR-1.4.5 |
+
+`GET /api/v1/public-config` response:
+
+```json
+{ "company_name": "Ruuma Eatery",
+  "whatsapp": { "enabled": true, "number": "628176315568",
+                "message_id": "Halo Ruuma, saya ingin bertanya tentang pesanan saya.",
+                "message_en": "Hello Ruuma, I have a question about my order." } }
+```
+
+Group scope only — it is fetched from pages with no store context (sign-in,
+credits), so a per-store override would answer differently depending on which
+page asked. Rate-limited with the menu reads: same shape of cheap anonymous GET.
+
+**The response is a compiled allowlist, not a query.** `sys_parameters` holds
+notification templates, rate-limit tuning and `is_secret` rows; the set of keys
+this endpoint can ever return is fixed in `handlers_config.go`, so no row and no
+flag can widen it (BR-1.4.5). `number` is normalised to E.164 digits, and
+`enabled` is forced false when it is blank. Three tests in
+`test/security/public_config_test.go` hold that: one plants a secret and a
+template and asserts neither appears, one fails on any field outside the
+documented shape, and one pins the blank-number interlock.
 
 `GET /api/v1/availability/slots` response element:
 
