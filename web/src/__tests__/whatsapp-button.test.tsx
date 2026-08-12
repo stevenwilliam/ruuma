@@ -6,6 +6,7 @@
 import { render, screen, waitFor } from '@testing-library/react'
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { WhatsAppButton } from '../components/WhatsAppButton'
+import { resetPublicConfig } from '../lib/config'
 
 type Config = {
   company_name: string
@@ -37,6 +38,10 @@ function mockConfig(whatsapp: Partial<Config['whatsapp']>) {
 
 beforeEach(() => {
   localStorage.clear()
+  // The config fetch is memoised so two components share one request. That
+  // cache is module state, so it survives between tests and would hand the
+  // next case the previous case's config.
+  resetPublicConfig()
 })
 
 afterEach(() => {

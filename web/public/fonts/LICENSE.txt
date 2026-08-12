@@ -1,0 +1,15 @@
+Playfair Display
+Copyright 2017 The Playfair Display Project Authors
+  (https://github.com/clauseggers/Playfair-Display)
+
+Licensed under the SIL Open Font License, Version 1.1.
+https://scripts.sil.org/OFL
+
+Self-hosted rather than loaded from a font CDN: docs/12 A08 forbids a
+third-party font host, because it leaks every visitor's IP and page to a
+party that is not ruuma.
+
+playfair-display-var.woff2 is the latin subset of the variable font, weight
+axis 400-900. Google Fonts serves one file for every weight in the range, so
+requesting 500/600/700 separately returned three byte-identical copies —
+hence one file and a `font-weight: 400 900` @font-face.

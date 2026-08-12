@@ -85,10 +85,13 @@ export default function MenuPage() {
   }, [storeId, query, cuisine, diet, sort])
 
   return (
-    <div className="flex flex-col gap-5">
-      <header className="flex flex-wrap items-baseline justify-between gap-2">
-        <div>
-          <h1 className="font-display text-2xl font-bold">{store?.name ?? copy.menu.title}</h1>
+    <div className="flex flex-col gap-7">
+      <header className="flex flex-wrap items-end justify-between gap-3 border-b border-border/70 pb-5">
+        <div className="flex flex-col gap-1.5">
+          <span className="eyebrow">{copy.menu.title}</span>
+          <h1 className="font-display text-3xl font-semibold leading-tight sm:text-4xl">
+            {store?.name ?? copy.menu.title}
+          </h1>
           {store && (
             <p className="text-sm text-muted">
               {store.address_line}
@@ -106,7 +109,7 @@ export default function MenuPage() {
 
       <SearchBox value={query} onChange={setQuery} />
 
-      <div className="flex flex-wrap gap-2">
+      <div className="flex flex-wrap items-center gap-2">
         <Chip active={cuisine === ''} onClick={() => setCuisine('')}>
           {copy.menu.all}
         </Chip>
@@ -121,7 +124,7 @@ export default function MenuPage() {
                   : 'Lainnya'}
           </Chip>
         ))}
-        <span className="mx-1 w-px bg-border" aria-hidden />
+        <span className="mx-1 hidden h-5 w-px self-center bg-border sm:block" aria-hidden />
         <Chip active={diet === 'halal'} onClick={() => setDiet(diet === 'halal' ? '' : 'halal')}>
           {copy.menu.halal}
         </Chip>
@@ -161,11 +164,11 @@ export default function MenuPage() {
       {/* The stagger is keyed to the filter/sort state, not just to mount:
           re-running it on every result change is the feedback that the filter
           did something, which a silently-swapped grid never gives. */}
-      <ul key={`${query}|${diet}|${sort}`} className="stagger grid gap-4 sm:grid-cols-2">
+      <ul key={`${query}|${diet}|${sort}`} className="stagger grid gap-5 sm:grid-cols-2">
         {(items ?? []).map((item) => (
           <li key={item.id}>
             <Link to={`/menu/${item.id}`} className="block h-full">
-              <Card className="flex h-full flex-col gap-2 overflow-hidden !p-0 transition-colors hover:border-primary">
+              <Card className="flex h-full flex-col gap-2 overflow-hidden !p-0 shadow-sm transition duration-200 hover:-translate-y-0.5 hover:shadow-md">
                 <div className="relative aspect-[4/3] w-full overflow-hidden bg-primary-subtle">
                   <img
                     src={`/dish/${item.sku}.jpg`}
@@ -185,10 +188,12 @@ export default function MenuPage() {
                   )}
                 </div>
 
-                <div className="flex flex-col gap-2 p-4 pt-3">
-                <div className="flex items-start justify-between gap-2">
-                  <h2 className="font-display text-base font-semibold">{localeName(item)}</h2>
-                  <span className="tabular whitespace-nowrap text-sm font-semibold">
+                <div className="flex flex-col gap-2.5 p-5 pt-4">
+                <div className="flex items-start justify-between gap-3">
+                  <h2 className="font-display text-lg font-semibold leading-snug">
+                    {localeName(item)}
+                  </h2>
+                  <span className="tabular whitespace-nowrap font-display text-base font-semibold text-primary-ink">
                     {rupiah(item.price.value)}
                   </span>
                 </div>
@@ -246,8 +251,13 @@ function Chip({
       aria-pressed={active}
       onClick={onClick}
       className={[
-        'inline-flex min-h-[40px] items-center rounded-full border px-3 text-sm',
-        active ? 'border-primary bg-primary-subtle text-primary-ink' : 'border-border text-body',
+        // A resting chip is a hairline on the page rather than a filled
+        // control: eleven equally-weighted pills were competing with the food.
+        // Only the selected one earns a fill.
+        'inline-flex min-h-[40px] items-center rounded-full border px-3.5 text-sm transition-colors',
+        active
+          ? 'border-primary bg-primary text-primary-fg'
+          : 'border-border bg-surface/85 text-body hover:border-primary/60',
       ].join(' ')}
     >
       {children}

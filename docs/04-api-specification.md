@@ -74,7 +74,7 @@ Stable codes include: `VALIDATION_FAILED`, `UNAUTHENTICATED`, `FORBIDDEN`,
 | GET | `/api/v1/availability/dates?store_id=&type=&month=` | bookable dates + a reason per unbookable date | BR-2.3.2 |
 | GET | `/api/v1/availability/slots?store_id=&date=&type=&items=` | slots with `remaining_orders`, `remaining_units`, `is_bookable`, `reason` | BR-2.3.5/6 |
 | POST | `/api/v1/cart/quote` | server-side pricing of a cart (lines, options, promo) | BR-2.5.x |
-| GET | `/api/v1/public-config` | allowlisted site chrome: company name, WhatsApp contact button | BR-1.4.5 |
+| GET | `/api/v1/public-config` | allowlisted site chrome: company name, WhatsApp button, backdrop | BR-1.4.5/6 |
 
 `GET /api/v1/public-config` response:
 
@@ -82,7 +82,8 @@ Stable codes include: `VALIDATION_FAILED`, `UNAUTHENTICATED`, `FORBIDDEN`,
 { "company_name": "Ruuma Eatery",
   "whatsapp": { "enabled": true, "number": "628176315568",
                 "message_id": "Halo Ruuma, saya ingin bertanya tentang pesanan saya.",
-                "message_en": "Hello Ruuma, I have a question about my order." } }
+                "message_en": "Hello Ruuma, I have a question about my order." },
+  "backdrop": { "enabled": true, "file": "backdrop.jpg" } }
 ```
 
 Group scope only — it is fetched from pages with no store context (sign-in,
@@ -93,10 +94,18 @@ page asked. Rate-limited with the menu reads: same shape of cheap anonymous GET.
 notification templates, rate-limit tuning and `is_secret` rows; the set of keys
 this endpoint can ever return is fixed in `handlers_config.go`, so no row and no
 flag can widen it (BR-1.4.5). `number` is normalised to E.164 digits, and
-`enabled` is forced false when it is blank. Three tests in
-`test/security/public_config_test.go` hold that: one plants a secret and a
-template and asserts neither appears, one fails on any field outside the
-documented shape, and one pins the blank-number interlock.
+`enabled` is forced false when it is blank. `backdrop.file` is a **filename
+under `/brand/`**, matched against `^[A-Za-z0-9._-]{1,80}\.(jpg|jpeg|png|webp)$`
+and replaced with the default if it fails — it lands inside a CSS `url()` in
+every visitor's browser, so an unvalidated value is a site-wide style-injection
+hole (BR-1.4.6).
+
+`test/security/public_config_test.go` holds all of it: one test plants a secret
+and a notification template and asserts neither appears, one fails on any field
+outside the documented shape, one pins the blank-number interlock, one covers
+the number formats an operator might paste, and eight feed hostile backdrop
+values — CSS breakout, path traversal, an absolute URL, an `.svg` — asserting
+each is served as the shipped default.
 
 `GET /api/v1/availability/slots` response element:
 

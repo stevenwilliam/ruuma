@@ -232,9 +232,30 @@ and is recorded with its before and after values.
 | Finance ageing alarm | `finance.verification_sla_minutes` |
 | WhatsApp button on the website | `company.whatsapp_enabled` |
 | The number that button dials | `company.whatsapp_number` |
+| Background picture on the site | `company.backdrop_file` |
+| Turn the background picture off | `company.backdrop_enabled` |
 | What the customer's message says | `company.whatsapp_message_id` / `_en` |
 
 Rates are in **basis points**: 1000 = 10%, 1150 = 11.5%.
+
+### Changing the background picture
+
+The photograph behind the customer site is `company.backdrop_file`, with
+`company.backdrop_enabled` to switch it off entirely. Both are under
+**Parameters** and take effect within about half a minute.
+
+Type a **filename only** — `backdrop.jpg` — not a web address and not a path.
+The file has to already be on the site under `/brand/`. Anything else is
+ignored and the site falls back to the standard picture, so a typo can never
+leave the page blank.
+
+**Adding a new picture still needs a developer** to place the file on the
+server. What you can do without one is switch between pictures that are already
+there, and turn the photograph off — which leaves a plain tinted background.
+
+Whatever the picture, the text stays readable: a fixed tint sits between the
+photograph and the page, and it is calculated to hold up against the brightest
+and darkest possible image.
 
 ### Changing the WhatsApp number
 

@@ -87,6 +87,27 @@ and test names — every rule below must be traceable to at least one test
     two settings can disagree, and "switched on but unreachable" is the worse
     failure: the customer believes they have made contact and waits.
 
+- **BR-1.4.6** The customer site's **background photograph is operator-controlled**
+  through `company.backdrop_enabled` and `company.backdrop_file`, served in the
+  same allowlisted `public-config` response (BR-1.4.5).
+  - `company.backdrop_file` is a **filename under `/brand/`, never a URL or a
+    path**. The API accepts only `[A-Za-z0-9._-]` with a `.jpg`, `.jpeg`,
+    `.png` or `.webp` extension, and anything else — including a value
+    containing `..` — is served as the shipped default.
+  - That validation is a security control, not tidiness. The value is placed
+    inside a CSS `url()` in every visitor's browser, so an unvalidated
+    parameter would let anyone holding the parameter permission inject styles
+    site-wide, or point the page at a third-party host and turn it into a
+    visitor-tracking beacon. `Content-Security-Policy: img-src 'self' data:
+    blob:` would block the external fetch, but the injection would not need it
+    to succeed.
+  - **A rejected value falls back rather than erroring.** This endpoint has no
+    channel to report a mistake to the operator, and a typo must not blank the
+    background of the whole site.
+  - Switching between *shipped* images and turning the photograph off both work
+    without a deploy. Adding a **new** image still needs one, until admin
+    uploads are served from object storage (open gap, `PROGRESS.md`).
+
 ### 1.5 Data listing
 
 - **BR-1.5.1** Every screen that lists or tables data provides a search box that

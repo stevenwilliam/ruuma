@@ -94,7 +94,7 @@ func TestPublicConfigCarriesOnlyAllowlistedFields(t *testing.T) {
 	// endpoint, so the allowlist applies to the top level as-is.
 	doc := payload
 
-	allowedTop := map[string]bool{"company_name": true, "whatsapp": true}
+	allowedTop := map[string]bool{"company_name": true, "whatsapp": true, "backdrop": true}
 	for field := range doc {
 		if !allowedTop[field] {
 			t.Errorf("unexpected top-level field %q in public-config", field)
@@ -192,5 +192,87 @@ func TestPublicConfigNormalisesTheNumber(t *testing.T) {
 				t.Errorf("%q normalised to %q, want %q", tc.typed, payload.WhatsApp.Number, tc.want)
 			}
 		})
+	}
+}
+
+// TestPublicConfigBackdropRejectsInjection pins the validation on the backdrop
+// filename (BR-1.4.6). The value ends up inside a CSS url() in every customer's browser,
+// so anyone holding the parameter permission would otherwise be one UPDATE away
+// from injecting styles — or pointing the page at a third-party host, which is
+// also a visitor-tracking channel. A bad value must fall back, not propagate.
+func TestPublicConfigBackdropRejectsInjection(t *testing.T) {
+	hostile := []struct {
+		name  string
+		value string
+	}{
+		{"css breakout", `x.jpg"); background: url(https://evil.example/p.png`},
+		{"path traversal", "../../etc/passwd"},
+		{"absolute url", "https://evil.example/tracker.png"},
+		{"no extension", "backdrop"},
+		{"script extension", "payload.svg"},
+		{"semicolon", "a.jpg;color:red"},
+		{"whitespace and quote", `a.jpg' `},
+		{"empty", ""},
+	}
+
+	for _, tc := range hostile {
+		t.Run(tc.name, func(t *testing.T) {
+			env := testenv.New(t)
+
+			err := env.DB.Exec(`
+				UPDATE sys_parameters SET value = $1 WHERE key = 'company.backdrop_file'`,
+				tc.value).Error
+			if err != nil {
+				t.Fatalf("set the backdrop: %v", err)
+			}
+			env.Params.Invalidate()
+
+			_, body := getPublicConfig(t, env)
+
+			var payload struct {
+				Backdrop struct {
+					File string `json:"file"`
+				} `json:"backdrop"`
+			}
+			if err := json.Unmarshal([]byte(body), &payload); err != nil {
+				t.Fatalf("decode: %v — body = %s", err, body)
+			}
+			if payload.Backdrop.File != "backdrop.jpg" {
+				t.Errorf("hostile value %q served as %q, want the default",
+					tc.value, payload.Backdrop.File)
+			}
+		})
+	}
+}
+
+// TestPublicConfigBackdropAcceptsAShippedFile is the other half: validation
+// that rejects everything is not validation, it is a broken setting.
+func TestPublicConfigBackdropAcceptsAShippedFile(t *testing.T) {
+	env := testenv.New(t)
+
+	const want = "ruuma-share-1200x630.png"
+	if err := env.DB.Exec(`
+		UPDATE sys_parameters SET value = $1 WHERE key = 'company.backdrop_file'`,
+		want).Error; err != nil {
+		t.Fatalf("set the backdrop: %v", err)
+	}
+	env.Params.Invalidate()
+
+	_, body := getPublicConfig(t, env)
+
+	var payload struct {
+		Backdrop struct {
+			Enabled bool   `json:"enabled"`
+			File    string `json:"file"`
+		} `json:"backdrop"`
+	}
+	if err := json.Unmarshal([]byte(body), &payload); err != nil {
+		t.Fatalf("decode: %v", err)
+	}
+	if payload.Backdrop.File != want {
+		t.Errorf("file = %q, want %q", payload.Backdrop.File, want)
+	}
+	if !payload.Backdrop.Enabled {
+		t.Error("backdrop reported disabled when the parameter is true")
 	}
 }

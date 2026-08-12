@@ -100,7 +100,12 @@ and `company.whatsapp_message_en`. All four are group-scoped
 (`is_store_overridable = false`), matching `company.phone` — the button is site
 chrome and appears on pages with no store context to resolve against.
 
-Four of these keys are readable unauthenticated through `GET /public-config`,
+Since `0017` it also carries `company.backdrop_enabled` and
+`company.backdrop_file` — the customer site's background photograph
+(BR-1.4.6). `backdrop_file` is a filename under `/brand/`, validated by the API
+against a strict pattern because the value ends up inside a CSS `url()`.
+
+Six of these keys are readable unauthenticated through `GET /public-config`,
 but **the table carries no marker saying so** — the allowlist is compiled into
 the service (BR-1.4.5). A `is_public` column would put the decision one UPDATE
 away from publishing a secret.
@@ -875,12 +880,12 @@ CREATE TABLE idempotency_keys (
   `0010` payments → `0011` cross-cutting + append-only triggers →
   `0012` reference data (the `sys_parameters` defaults and message templates)
   → `0013` notification body → `0014` staff subject type → `0015` rate-limit
-  parameters → `0016` WhatsApp contact parameters.
+  parameters → `0016` WhatsApp contact parameters → `0017` backdrop parameters.
   Ordering is driven by foreign keys: `promotions` and `delivery_zones` precede
   `orders`, and `promotion_redemptions` follows it.
 - **Demo data is not a migration.** Three seed stores, the menu and the staff
   accounts are loaded by `cmd/api seed`, so a production deployment never
-  receives fake stores. Only reference data (`0012`, `0015`, `0016`) ships in
+  receives fake stores. Only reference data (`0012`, `0015`, `0016`, `0017`) ships in
   the schema.
 - **A reference-data migration must have `parameters` or `reference_data` in its
   filename.** `db/embed.go` `DataMigrations()` selects them by that substring,

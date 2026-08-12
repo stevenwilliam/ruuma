@@ -53,6 +53,10 @@ _Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden
 - ✅ **UI write-path hardening (D34)** — every mutating control is an
       `AsyncButton`: one click one write, and a confirmation on anything
       irreversible. Six new tests in `web/src/__tests__/async-button.test.tsx`
+- ✅ **Operator-changeable backdrop (D43)** — validated as a security control,
+      8 injection tests (CSS breakout, traversal, absolute URL, `.svg`)
+- ✅ **Elegance pass (D44)** — Playfair Display self-hosted, editorial header,
+      quieter chips; every AA pair still passing, verified by screenshot
 - ✅ **Public config endpoint (D35)** — `GET /api/v1/public-config` on a
       compiled allowlist; 4 tests in `test/security/public_config_test.go`
       including a planted-secret leak probe

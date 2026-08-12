@@ -18,7 +18,7 @@ export function Button({
   variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
 }) {
   const base =
-    'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50'
+    'inline-flex min-h-[44px] items-center justify-center gap-2 rounded-full px-5 py-2 text-sm font-medium tracking-wide transition-colors disabled:cursor-not-allowed disabled:opacity-50'
   const styles = {
     primary: 'bg-primary text-primary-fg hover:bg-primary-hover',
     secondary: 'border border-border bg-surface text-body hover:bg-primary-subtle',
@@ -95,7 +95,7 @@ export function AsyncButton({
 
 export function Card({ children, className = '' }: { children: ReactNode; className?: string }) {
   return (
-    <div className={`rounded-2xl border border-border bg-card p-4 ${className}`}>{children}</div>
+    <div className={`rounded-2xl border border-border/70 bg-card p-5 ${className}`}>{children}</div>
   )
 }
 
@@ -140,7 +140,7 @@ export function TextInput(props: InputHTMLAttributes<HTMLInputElement>) {
   return (
     <input
       {...props}
-      className={`min-h-[44px] rounded-xl border border-border bg-surface px-3 py-2 text-sm text-body placeholder:text-muted ${props.className ?? ''}`}
+      className={`min-h-[44px] rounded-xl border border-border/80 bg-surface px-3.5 py-2 text-sm text-body placeholder:text-muted ${props.className ?? ''}`}
     />
   )
 }

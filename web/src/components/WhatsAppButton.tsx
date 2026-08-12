@@ -8,38 +8,13 @@
 // number is blank. A contact button that opens a chat with nobody is worse
 // than no button: the customer believes they have asked and waits.
 
-import { useEffect, useState } from 'react'
-import { api } from '../lib/api'
 import { currentLang, t } from '../i18n'
-
-type PublicConfig = {
-  company_name: string
-  whatsapp: {
-    enabled: boolean
-    number: string
-    message_id: string
-    message_en: string
-  }
-}
+import { usePublicConfig } from '../lib/config'
 
 export function WhatsAppButton() {
   const copy = t()
-  const [config, setConfig] = useState<PublicConfig | null>(null)
-
-  useEffect(() => {
-    let cancelled = false
-    api
-      .get<PublicConfig>('/public-config')
-      // Chrome, not content: if this read fails the button stays hidden and
-      // the page is otherwise unaffected. Nothing is worth an error banner.
-      .then((res) => {
-        if (!cancelled) setConfig(res)
-      })
-      .catch(() => undefined)
-    return () => {
-      cancelled = true
-    }
-  }, [])
+  // Shared with the backdrop override — one request, not two (lib/config.ts).
+  const config = usePublicConfig()
 
   if (!config?.whatsapp.enabled || !config.whatsapp.number) return null
 

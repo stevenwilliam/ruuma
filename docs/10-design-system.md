@@ -157,6 +157,14 @@ photograph in:
 Regenerate both with `go run ./tools/dishphotos BG-HERO`; the placeholder file
 is generated, never hand-edited.
 
+**The image is operator-changeable** (BR-1.4.6). `--backdrop-image` is a custom
+property whose default is the shipped file, so the fast path above belongs to
+the configuration nobody touched; `web/src/lib/backdrop.ts` only writes the
+property when the operator has actually chosen something else, or switched the
+photograph off. Reading the filename from the API *before* setting it would put
+the image behind a round trip and undo the preload — so it does nothing in the
+common case, deliberately.
+
 **On the image itself:** Commons has no genuine Indonesian fine-dining
 photography — the searches return Turkish pastry and lotus seeds from the
 curated quality pools, and the Indonesian results are canteen tables. Two
@@ -281,12 +289,36 @@ Self-hosted (no third-party font CDN — see `12-security.md`, A08).
 
 | Role | Family | Sizes |
 |---|---|---|
-| Display / headings | **Plus Jakarta Sans** 600/700 | 32 / 24 / 20 / 18 |
+| Display / headings | **Playfair Display** 500–700 | 36 / 30 / 20 / 18 |
 | Body / UI | **Inter** 400/500 | 16 base, 14 secondary, 12 meta |
-| Numeric (prices, capacity, totals) | Inter, `font-variant-numeric: tabular-nums` | inherits |
+| Numeric (prices, capacity, totals) | `font-variant-numeric: tabular-nums` | inherits |
 
 Body never goes below 14px. Prices always render with thousands separators in
 `id-ID` format (`Rp 125.000`) and use tabular numerals so columns align.
+
+**Serif display against a sans body.** The wordmark is a high-contrast serif
+(§1), and setting headings in a second sans was the single largest reason the
+page read generic — nothing on screen echoed the logo. Playfair Display is the
+"Classic Elegant" pairing with Inter.
+
+- **Self-hosted at `/fonts/playfair-display-var.woff2`**, 38 KB, SIL OFL 1.1,
+  licence beside it. Never a font CDN (`12-security.md` A08): a CDN sees every
+  visitor's IP and the page they are on.
+- **One variable file, not three weights.** Google Fonts serves the same bytes
+  for every weight in a variable range — asking for 500, 600 and 700 returned
+  three byte-identical files. `font-weight: 400 900` on a single `@font-face`.
+- `font-display: swap`, and preloaded from `index.html` with `crossorigin`
+  (required even same-origin, or the browser fetches it twice).
+- `.font-display` carries `letter-spacing: -0.015em`. A serif at heading sizes
+  has more built-in spacing than a screen wants; the negative tracking is what
+  makes it read as set rather than typed.
+
+### 3.1 The `.eyebrow`
+
+A small, wide-tracked, uppercase label above a heading — 11px, `0.18em`
+tracking, `--text-muted`. It is the cheapest single move that makes a layout
+look considered rather than assembled, and it gives a page a name without
+spending a heading level on it.
 
 ## 4. Components
 

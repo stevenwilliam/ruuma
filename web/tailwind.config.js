@@ -27,7 +27,9 @@ export default {
         danger: 'var(--danger)',
       },
       fontFamily: {
-        display: ['"Plus Jakarta Sans"', 'system-ui', 'sans-serif'],
+        // Serif display against a sans body — the "Classic Elegant" pairing,
+        // and the one that matches the wordmark (docs/10 §1, §3).
+        display: ['"Playfair Display"', 'Georgia', 'Cambria', 'serif'],
         sans: ['Inter', 'system-ui', 'sans-serif'],
       },
       borderRadius: { xl: '0.875rem', '2xl': '1.25rem' },

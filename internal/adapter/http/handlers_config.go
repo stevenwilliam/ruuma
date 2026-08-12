@@ -1,6 +1,7 @@
 package http
 
 import (
+	"regexp"
 	"strings"
 
 	"github.com/gin-gonic/gin"
@@ -27,6 +28,8 @@ var publicConfigKeys = []string{
 	"company.whatsapp_number",
 	"company.whatsapp_message_id",
 	"company.whatsapp_message_en",
+	"company.backdrop_enabled",
+	"company.backdrop_file",
 }
 
 // PublicConfigKeys exposes the allowlist so the security suite can assert that
@@ -43,9 +46,38 @@ type whatsappConfigDTO struct {
 	MessageEN string `json:"message_en"`
 }
 
+type backdropConfigDTO struct {
+	Enabled bool `json:"enabled"`
+	// File is a bare filename under /brand/, never a URL or a path. The client
+	// builds url(/brand/<file>) from it, so anything that could carry a quote,
+	// a parenthesis or a semicolon would be a style-injection hole reachable by
+	// anyone holding the parameter permission.
+	File string `json:"file"`
+}
+
 type publicConfigDTO struct {
 	CompanyName string            `json:"company_name"`
 	WhatsApp    whatsappConfigDTO `json:"whatsapp"`
+	Backdrop    backdropConfigDTO `json:"backdrop"`
+}
+
+// safeBackdropFile matches a plain filename with an image extension (BR-1.4.6). Note the
+// dot is inside the character class only for things like "hero.v2.jpg"; path
+// separators, "..", and every CSS metacharacter are excluded by construction
+// rather than by blocklist.
+var safeBackdropFile = regexp.MustCompile(`^[A-Za-z0-9._-]{1,80}\.(?i:jpg|jpeg|png|webp)$`)
+
+// backdropFile validates the configured filename and falls back to the shipped
+// default. A parameter that fails validation is treated as unset rather than
+// refused: an operator's typo must not blank the whole page background, and
+// this endpoint has no way to report an error to them.
+func backdropFile(raw string) string {
+	const fallback = "backdrop.jpg"
+	name := strings.TrimSpace(raw)
+	if name == "" || strings.Contains(name, "..") || !safeBackdropFile.MatchString(name) {
+		return fallback
+	}
+	return name
 }
 
 func (s *Server) publicConfig(c *gin.Context) {
@@ -66,6 +98,10 @@ func (s *Server) publicConfig(c *gin.Context) {
 			Number:    number,
 			MessageID: s.Params.String(ctx, nil, "company.whatsapp_message_id"),
 			MessageEN: s.Params.String(ctx, nil, "company.whatsapp_message_en"),
+		},
+		Backdrop: backdropConfigDTO{
+			Enabled: s.Params.Bool(ctx, nil, "company.backdrop_enabled"),
+			File:    backdropFile(s.Params.String(ctx, nil, "company.backdrop_file")),
 		},
 	})
 }

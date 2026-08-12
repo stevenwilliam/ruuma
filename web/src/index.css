@@ -6,6 +6,22 @@
 @tailwind components;
 @tailwind utilities;
 
+/* The display face. Self-hosted, never a font CDN (docs/12 A08) — a CDN leaks
+   every visitor's IP and the page they are on to a third party.
+   A serif, because the ruuma wordmark is a high-contrast serif (docs/10 §1) and
+   pairing it with a second sans was what made the page read generic. One
+   variable file covers the whole weight range: Google serves the same bytes for
+   every weight in it, so three "weights" were three identical downloads.
+   font-display: swap — text is readable in the fallback immediately and
+   reflows once, rather than being invisible while 38 KB arrives. */
+@font-face {
+  font-family: 'Playfair Display';
+  src: url('/fonts/playfair-display-var.woff2') format('woff2-variations');
+  font-weight: 400 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 /* Design tokens — docs/10 §2. Sampled from the supplied logo (#277066); every
    foreground/background pair is contrast-checked at AA or better. */
 :root {
@@ -59,9 +75,9 @@
 }
 
 /* Page backdrop — docs/10 §2.1.
-   A real photograph: nasi padang on a warung table, fetched from Wikimedia
+   A real photograph: ayam bakar on a black slate plate, fetched from Wikimedia
    Commons by tools/dishphotos under CC BY-SA 4.0 and credited at /credits like
-   every other photo on the site (D31).
+   every other photo on the site (D31). Operator-changeable (BR-1.4.6).
    Three earlier attempts at this were an abstract gradient wash. Two of them
    were genuinely invisible; the third rendered but was still not what was
    asked for. A "background picture" means a picture.
@@ -77,6 +93,11 @@
      than only in the gutters — the mistake that made the previous version
      invisible on a phone, where cards cover almost the whole viewport. */
   --surface-card: rgba(255, 255, 255, 0.72);
+  /* Overridable at runtime from sys_parameters (BR-1.4.6). It is a variable
+     rather than a literal so the operator's choice is a one-property change;
+     the default stays here so it is preloadable and paints without waiting for
+     the API. */
+  --backdrop-image: url('/brand/backdrop.jpg');
 }
 
 @media (prefers-color-scheme: dark) {
@@ -127,7 +148,7 @@ body::before {
      The placeholder is blurred purely by being upscaled to cover. */
   background-image:
     linear-gradient(var(--scrim), var(--scrim)),
-    url('/brand/backdrop.jpg'),
+    var(--backdrop-image),
     var(--backdrop-lqip);
   background-size: cover, cover, cover;
   background-position: center, center, center;
@@ -203,6 +224,24 @@ body::after {
 
 /* Prices align in columns (docs/10 §3). */
 .tabular { font-variant-numeric: tabular-nums; }
+
+/* Display type is set tighter than its default. A serif at heading sizes has
+   too much built-in letter spacing for a screen — the negative tracking is what
+   makes it read as set rather than typed. */
+.font-display {
+  letter-spacing: -0.015em;
+}
+
+/* Section label: the small, wide-tracked, uppercase line above a heading. It is
+   the cheapest single move that makes a layout look considered rather than
+   assembled. */
+.eyebrow {
+  font-size: 0.6875rem;
+  line-height: 1;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--text-muted);
+}
 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {

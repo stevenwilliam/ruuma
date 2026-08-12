@@ -18,6 +18,10 @@
          appearing. The inlined placeholder in backdrop-lqip.css covers what is
          left. -->
     <link rel="preload" as="image" href="/brand/backdrop.jpg" fetchpriority="high" />
+    <!-- The display face is used by the first heading on every page, so it is
+         on the critical path. crossorigin is required on font preloads even
+         same-origin, or the browser fetches it a second time. -->
+    <link rel="preload" as="font" type="font/woff2" href="/fonts/playfair-display-var.woff2" crossorigin />
 
     <title>Ruuma Eatery — Pesan Makanan Indonesia, Tionghoa & Barat</title>
     <meta
