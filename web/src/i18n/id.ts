@@ -178,6 +178,20 @@ export const id = {
     needAccount: 'Belum punya akun?',
     haveAccount: 'Sudah punya akun?',
   },
+  verifyEmail: {
+    title: 'Verifikasi email',
+    checking: 'Memverifikasi email Anda…',
+    success: 'Email Anda sudah terverifikasi. Silakan masuk.',
+    failed: 'Tautan verifikasi ini tidak berlaku.',
+    expiredHint:
+      'Tautan memiliki masa berlaku dan hanya bisa dipakai satu kali. Masuk lalu minta email baru jika diperlukan.',
+    missingToken: 'Tautan ini tidak lengkap — silakan buka tautan dari email Anda secara utuh.',
+  },
+  notFound: {
+    title: 'Halaman tidak ditemukan',
+    body: 'Halaman itu tidak ada. Mungkin sudah dipindahkan, atau tautannya tidak lengkap.',
+    home: 'Ke menu',
+  },
   a11y: {
     skipToContent: 'Lewati ke konten utama',
     languageToggle: 'Ganti bahasa',

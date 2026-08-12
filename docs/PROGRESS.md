@@ -84,6 +84,18 @@ _Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden
 - ✅ `16-admin-guide.md` — kitchen, counter, finance, store manager, admin
 
 ## Known gaps
+
+- ⛔ **WhatsApp OTP is blocked on a QR scan** (`RUN-WHEN-BACK.md` §3). The chain
+  is otherwise fixed and proven end to end; the WAHA session for
+  +62 817-6315-568 is `FAILED` and only the handset can re-pair it.
+- ⬜ **API and worker are started by hand and do not survive a reboot.** They
+  want systemd units (`RUN-WHEN-BACK.md` §3a). Twice during this build a stale
+  process kept port 8080 and silently served old configuration.
+- ⬜ **`POST /otp/request` reports `sent` before delivery is attempted.** The
+  send is queued, so the HTTP answer cannot know; but the customer is told a
+  code is on its way when it may never arrive. Needs a product decision —
+  either surface the failure on the OTP screen, or verify the provider is
+  healthy before claiming success (D46).
 See `docs/12-security.md` §7: object-storage upload rules, OAuth providers,
 the phase-2 payment webhook and load targets are not yet covered by automated
 tests.

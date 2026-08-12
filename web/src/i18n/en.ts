@@ -179,6 +179,20 @@ export const en: typeof IDCatalog = {
     needAccount: 'No account yet?',
     haveAccount: 'Already have an account?',
   },
+  verifyEmail: {
+    title: 'Email verification',
+    checking: 'Verifying your email…',
+    success: 'Your email is verified. You can sign in now.',
+    failed: 'This verification link is not valid.',
+    expiredHint:
+      'Links expire, and each one can only be used once. Sign in and request a new email if you need another.',
+    missingToken: 'This link is incomplete — please open the link from your email in full.',
+  },
+  notFound: {
+    title: 'Page not found',
+    body: 'That page does not exist. It may have moved, or the link may be incomplete.',
+    home: 'Go to the menu',
+  },
   a11y: {
     skipToContent: 'Skip to main content',
     languageToggle: 'Change language',

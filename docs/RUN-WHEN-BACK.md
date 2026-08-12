@@ -4,7 +4,7 @@ Steps that need an interactive terminal, a browser, or credentials that do not
 exist yet. Everything else has already been run; what is here is what could not
 be, and why. Use `vi` for any edits.
 
-_Updated: 2026-08-02._
+_Updated: 2026-08-12._
 
 ## Already done — no action needed
 
@@ -62,17 +62,81 @@ one gap worth walking (`docs/12` §7):
 3. In the admin finance queue, open the proof: the link must be presigned and
    expire.
 
-## 3. Send a real WhatsApp message
+## 3. WhatsApp OTP — the session needs a QR scan (BLOCKING)
 
-Notifications default to the `log` provider so a local run never touches the
-shared WAHA session. To test a real send, to your own number only:
+**This is the one thing stopping WhatsApp OTP from working.** Everything else in
+the chain is fixed and proven: `notify.provider` is `waha`, `WAHA_API_KEY` is
+populated from `/etc/claudedev/whatsapp.env`, and the worker drains the queue
+and reaches WAHA. The queue now fails with WAHA's own message:
 
-```bash
-# Admin → Parameters → notify.provider = waha
-make worker
+```
+waha: status 422: {"error":"Session status is not as expected. Try again later
+or restart the session"}
 ```
 
-Then place an order and watch `journalctl`/stdout for the dispatch.
+The stored WhatsApp Web credentials for session `default` are dead — the phone
+unlinked it or it expired. A restart does not recover it; it goes
+`STARTING` → `FAILED`. Re-pairing needs the QR scanned from the handset that
+owns **+62 817-6315-568**, which cannot be automated.
+
+```bash
+# 1. Confirm the session is still failed
+KEY=$(sudo grep -oP '(?<=^WAHA_API_KEY=).*' /etc/claudedev/whatsapp.env)
+curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/sessions/default | python3 -m json.tool
+
+# 2. Restart it, then immediately fetch the pairing QR
+curl -s -X POST -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/sessions/default/restart
+curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/default/auth/qr?format=image \
+  -o /tmp/waha-qr.png
+
+# 3. Open /tmp/waha-qr.png over an SSH tunnel or scp it, then on the phone:
+#    WhatsApp → Settings → Linked devices → Link a device → scan.
+
+# 4. It should report WORKING
+curl -s -H "X-Api-Key: $KEY" http://127.0.0.1:3000/api/sessions/default | python3 -m json.tool
+```
+
+Then re-drive an OTP and watch it leave:
+
+```bash
+curl -s -X POST http://127.0.0.1/api/v1/otp/request \
+  -H 'Content-Type: application/json' \
+  -d '{"phone":"628176315568","purpose":"login"}'
+
+sudo -u postgres psql -d ruuma -c \
+  "SELECT channel, status, attempts, left(last_error,80) FROM notifications ORDER BY created_at DESC LIMIT 3;"
+```
+
+`status = sent` is the finish line. Any queued notification that failed earlier
+stays `failed` — retry or delete those rows, they will not be picked up again
+once attempts are exhausted.
+
+## 3a. The worker has to be running, and it was not
+
+Notifications sit in `queued` forever unless `cmd/api worker` is running — it is
+what drains the queue on a 15-second tick. It was not running, which is why
+nothing was even attempted.
+
+Both the API and the worker are currently started by hand
+(`nohup setsid go run ./cmd/api …`) and **will not survive a reboot**. They have
+been restarted by hand several times during this build, and twice a stale
+process kept the port and silently served old configuration. They want systemd
+units:
+
+```bash
+sudo vi /etc/systemd/system/ruuma-api.service
+sudo vi /etc/systemd/system/ruuma-worker.service
+sudo systemctl daemon-reload
+sudo systemctl enable --now ruuma-api ruuma-worker
+```
+
+Until then, after changing `.env`, confirm the *serving* process actually picked
+it up rather than assuming the restart worked:
+
+```bash
+PID=$(sudo ss -ltnp | grep 8080 | grep -oP 'pid=\K[0-9]+' | head -1)
+sudo tr '\0' '\n' < /proc/$PID/environ | grep APP_BASE_URL
+```
 
 ## 4. Google and Instagram sign-in
 

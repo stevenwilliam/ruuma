@@ -12,6 +12,8 @@ import CheckoutPage from './pages/customer/Checkout'
 import OrderPage from './pages/customer/Order'
 import OrdersPage from './pages/customer/Orders'
 import AuthPage from './pages/customer/Auth'
+import VerifyEmailPage from './pages/customer/VerifyEmail'
+import NotFoundPage from './pages/customer/NotFound'
 
 // Lazy: the credits page carries the whole photo manifest and almost nobody
 // opens it, but the licences require it to be reachable from every page.
@@ -41,6 +43,14 @@ export default function App() {
           <Route path="/orders/:id" element={<OrderPage />} />
           <Route path="/signin" element={<AuthPage />} />
           <Route path="/credits" element={<CreditsPage />} />
+          {/* The path registration emails link to. authsvc builds
+              {baseURL}/verify-email?token=…, which is this route and not the
+              API's /api/v1/auth/verify-email. Without it every verification
+              email landed on an empty page. */}
+          <Route path="/verify-email" element={<VerifyEmailPage />} />
+          {/* Catch-all. nginx serves index.html for every path, so without a
+              wildcard an unknown URL rendered the chrome around nothing. */}
+          <Route path="*" element={<NotFoundPage />} />
         </Route>
         <Route path="/admin/*" element={<AdminApp />} />
       </Routes>
