@@ -191,7 +191,11 @@ export default function MenuPage() {
                   {item.tags.vegetarian && <Badge>{copy.menu.vegetarian}</Badge>}
                   {item.tags.spice_level > 0 && (
                     <Badge tone="warning">
-                      {copy.menu.spicy} {'🌶'.repeat(item.tags.spice_level)}
+                      {/* The chillies are a visual scale, not content: a
+                          screen reader would otherwise read "hot pepper" once
+                          per level after the word that already said it. */}
+                      {copy.menu.spicy}{' '}
+                      <span aria-hidden="true">{'🌶'.repeat(item.tags.spice_level)}</span>
                     </Badge>
                   )}
                   {item.tags.contains_pork && <Badge>Pork</Badge>}

@@ -130,7 +130,7 @@ func main() {
 }
 
 func run(only []string) error {
-	if err := os.MkdirAll(outDir, 0o755); err != nil {
+	if err := os.MkdirAll(outDir, 0o750); err != nil {
 		return err
 	}
 
@@ -409,7 +409,7 @@ func saveCredits(m map[string]credit) error {
 	if err != nil {
 		return err
 	}
-	return os.WriteFile(creditsTo, append(raw, '\n'), 0o644)
+	return os.WriteFile(creditsTo, append(raw, '\n'), 0o600)
 }
 
 func contains(hay []string, needle string) bool {

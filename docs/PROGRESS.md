@@ -46,9 +46,19 @@ _Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden
 ## M3 — Test & harden (step 5 of the workflow)
 - ✅ Unit, integration, security and e2e suites all green (`docs/12` §6)
 - ✅ **Zero oversell** proven over 10 rounds × 20 simultaneous checkouts
-- ✅ `go vet`, `staticcheck`, `gosec`, `govulncheck` clean
+- ✅ `go vet`, `staticcheck`, `gosec`, `govulncheck` clean — `make check` green
+      end to end, including the `web-audit` dependency gate
 - ✅ All 115 `BR-x.y` rules referenced by code or test (`make test-br-coverage`)
 - ✅ Three real defects found by the suites and fixed (`docs/12` §6)
+- ✅ **UI write-path hardening (D34)** — every mutating control is an
+      `AsyncButton`: one click one write, and a confirmation on anything
+      irreversible. Six new tests in `web/src/__tests__/async-button.test.tsx`
+- ⚠️ **This section overstated itself between D31 and D34.** `gosec` had been
+      failing on 5 findings in `tools/genassets` and `tools/dishphotos` since
+      the dish-photography work landed, and `web-audit` was failing on the
+      `nanoid` advisory, while this file still read ✅. Both are fixed and the
+      gate is genuinely green — the lesson is that a ✅ here has to be re-earned
+      by running the gate, not inherited from the last time it passed
 
 ## M4 — Handbooks (step 6 of the workflow)
 - ✅ `14-production-deployment-handbook.md` — empty Ubuntu 24.04/26.04, copy-paste, full absolute paths, `vi`
@@ -60,3 +70,8 @@ _Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden
 See `docs/12-security.md` §7: object-storage upload rules, OAuth providers,
 the phase-2 payment webhook and load targets are not yet covered by automated
 tests.
+
+- ⬜ **Admin copy is inline English, not message catalogues** (`docs/10` §5.1).
+  The customer app reads every string from `web/src/i18n`; the admin app does
+  not, across roughly ten files. This contradicts CLAUDE.md §10 and must close
+  before `16-admin-guide.md` can claim bilingual support.

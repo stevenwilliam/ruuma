@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, type ListResponse } from '../../lib/api'
 import { SearchBox } from '../../components/SearchBox'
-import { Badge, Button, Card, ErrorNote, Spinner } from '../../components/ui'
+import { AsyncButton, Badge, Card, ErrorNote, Spinner } from '../../components/ui'
 import { Table } from './common'
 import { t } from '../../i18n'
 
@@ -77,9 +77,11 @@ export default function ParametersAdmin() {
                 {row.IsStoreOverridable ? <Badge tone="primary">per store</Badge> : <Badge>group</Badge>}
               </td>
               <td className="px-3 py-2">
-                <Button variant="secondary" onClick={() => edit(row)}>
+                {/* The prompt for the new value is the confirmation step; this
+                    only needs the in-flight guard. */}
+                <AsyncButton variant="secondary" busyLabel="Saving…" onRun={() => edit(row)}>
                   Edit
-                </Button>
+                </AsyncButton>
               </td>
             </tr>
           ))}

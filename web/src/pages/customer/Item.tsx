@@ -87,7 +87,8 @@ export default function ItemPage() {
           {item.tags.vegetarian && <Badge>{copy.menu.vegetarian}</Badge>}
           {item.tags.spice_level > 0 && (
             <Badge tone="warning">
-              {copy.menu.spicy} {'🌶'.repeat(item.tags.spice_level)}
+              {copy.menu.spicy}{' '}
+              <span aria-hidden="true">{'🌶'.repeat(item.tags.spice_level)}</span>
             </Badge>
           )}
           {item.min_lead_minutes > 0 && (

@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, type ListResponse } from '../../lib/api'
 import { SearchBox } from '../../components/SearchBox'
-import { Badge, Button, Card, ErrorNote, Field, TextInput } from '../../components/ui'
+import { AsyncButton, Badge, Card, ErrorNote, Field, TextInput } from '../../components/ui'
 import { StoreSelect, Table, todayISO, useStores } from './common'
 
 type HoursRow = {
@@ -157,9 +157,9 @@ export default function ScheduleAdmin() {
         ))}
       </Table>
 
-      <Button className="self-start" onClick={save}>
+      <AsyncButton className="self-start" busyLabel="Saving…" onRun={save}>
         Save opening hours
-      </Button>
+      </AsyncButton>
 
       <Card className="flex flex-col gap-3">
         <h2 className="font-display text-lg font-semibold">Blackout dates</h2>
@@ -184,9 +184,17 @@ export default function ScheduleAdmin() {
               {(id) => <TextInput id={id} value={reason} onChange={(e) => setReason(e.target.value)} />}
             </Field>
           </div>
-          <Button onClick={addBlackout} disabled={!reason}>
+          {/* D27: a blackout may be today, and it stops every remaining slot
+              for that date the moment it lands. That is the emergency-closure
+              path, so it is the one action on this page that must ask. */}
+          <AsyncButton
+            disabled={!reason}
+            busyLabel="Closing…"
+            confirm={`Close ${newDate || 'this date'} for new orders? Remaining slots stop accepting orders at once. Orders already booked are not cancelled.`}
+            onRun={addBlackout}
+          >
             Close this date
-          </Button>
+          </AsyncButton>
         </div>
 
         <ul className="flex flex-col gap-1 text-sm">

@@ -152,6 +152,45 @@ active, disabled and loading states.
 - **Disabled slots** show the *reason* (past, closed, full, after cutoff), not
   just a greyed box (BR-2.x scheduling rules).
 
+### 4.0 Writes go through `AsyncButton`, not `Button`
+
+Any control that posts, puts or deletes uses **`AsyncButton`** (`web/src/components/ui.tsx`).
+`Button` is for navigation and local state only. `AsyncButton` guarantees two
+things a plain button cannot:
+
+1. **One click, one write.** It disables itself for the life of the request and
+   sets `aria-busy`. This is not cosmetic: every mutating call site passes a
+   fresh `crypto.randomUUID()` as its idempotency key, so two clicks are two
+   *distinct* operations to the API rather than one retried — the key that
+   exists to make a retry safe does nothing for the double-click it is most
+   needed for. Verifying a payment twice would write two rows to
+   `payment_events`, and those are immutable (D26).
+2. **A confirmation on anything that cannot be walked back**, via the `confirm`
+   prop. Native `window.confirm` on purpose — keyboard-accessible and
+   focus-correct without a hand-rolled focus trap, and consistent with the
+   `window.prompt` already used to capture mismatch and rejection reasons.
+
+An action whose own flow already prompts for a value (set stock, reject a
+payment, edit a parameter) does **not** also confirm — the prompt is the
+confirmation. Actions that only ever make things *more* available (lift an 86,
+activate a store) do not confirm either; only the destructive direction asks.
+
+Which actions confirm today:
+
+| Action | Why it asks |
+| --- | --- |
+| Verify a payment (matching amount) | Money, recorded permanently (D26) |
+| Close a date / blackout | Takes effect immediately, stops every remaining slot (D27) |
+| Deactivate a staff member | Access is revoked at once |
+| Deactivate a store | Disappears from the customer site at once (D30) |
+| 86 a dish | Customers stop being able to order it at once |
+| Hand an order over (`PICKED_UP`) | Terminal state, no screen walks it back |
+
+`onRun` is expected to render its own failure through `ErrorNote`; `AsyncButton`
+catches and logs as a backstop so a caller that forgets cannot turn a failed
+write into an unhandled promise rejection. Behaviour is pinned by
+`web/src/__tests__/async-button.test.tsx`.
+
 ### 4.1 Lists & tables — search box is mandatory
 
 Every list/table view **must** include a search box that filters its data
@@ -209,3 +248,22 @@ AA comfortably.
 - Respects `prefers-reduced-motion` and `prefers-color-scheme`.
 - Language toggle sets `<html lang>` to `id` or `en`; all copy comes from message
   catalogues, never inline strings.
+- **Decorative emoji carry `aria-hidden="true"`.** The chilli scale on a menu
+  card is a visual quantity, not content — the badge next to it already says
+  "spicy", and without the attribute a screen reader reads "hot pepper" once per
+  level after the word that just said it. Emoji are never the only carrier of
+  meaning.
+- Images that a neighbouring heading already names take `alt=""` rather than a
+  duplicate description — the dish photo on a menu card is the case in point,
+  since the `<h2>` beside it is the dish name. This is deliberate, not a
+  missing alt.
+
+### 5.1 Known gap — admin copy is not in the catalogues
+
+The customer app reads every string from `web/src/i18n`. The admin app does
+not: page titles, table headings, button labels and the confirmation messages
+added in §4.0 are inline English. That contradicts CLAUDE.md §10 and the last
+bullet above, and it spans roughly ten files, so it is recorded here as a debt
+rather than quietly half-fixed. Admin is staff-facing and English-only in
+practice today; this must be closed before the admin guide (docs/16) claims
+bilingual support.

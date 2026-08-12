@@ -81,6 +81,7 @@ func lightLogo() error {
 		for x := b.Min.X; x < b.Max.X; x++ {
 			_, _, _, a := src.At(x, y).RGBA()
 			// --primary-fg: white text on a primary fill (docs/10 §2).
+			// #nosec G115 -- RGBA() returns alpha in 0..0xFFFF, so a>>8 is 0..0xFF.
 			out.SetNRGBA(x, y, color.NRGBA{0xFF, 0xFF, 0xFF, uint8(a >> 8)})
 		}
 	}
@@ -167,7 +168,7 @@ var skus = []string{
 }
 
 func cards() error {
-	if err := os.MkdirAll(menuDir, 0o755); err != nil {
+	if err := os.MkdirAll(menuDir, 0o750); err != nil {
 		return fmt.Errorf("mkdir %s: %w", menuDir, err)
 	}
 	for _, sku := range skus {
@@ -198,6 +199,8 @@ type rng struct{ s uint64 }
 func newRNG(sku string) *rng {
 	var h uint64 = 1469598103934665603
 	for _, r := range sku {
+		// #nosec G115 -- ranging a string yields valid non-negative code points,
+		// and this is a hash: only determinism matters, not the numeric value.
 		h ^= uint64(r)
 		h *= 1099511628211
 	}

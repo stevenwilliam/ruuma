@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, type ListResponse, type Staff } from '../../lib/api'
 import { SearchBox } from '../../components/SearchBox'
-import { Badge, Button, Card, ErrorNote, Field, Spinner, TextInput } from '../../components/ui'
+import { AsyncButton, Badge, Card, ErrorNote, Field, Spinner, TextInput } from '../../components/ui'
 import { Table, useStores } from './common'
 import { t } from '../../i18n'
 
@@ -94,9 +94,14 @@ export default function StaffAdmin() {
               </td>
               <td className="px-3 py-2">
                 {u.is_active && (
-                  <Button variant="secondary" onClick={() => deactivate(u.id)}>
+                  <AsyncButton
+                    variant="secondary"
+                    busyLabel="Deactivating…"
+                    confirm={`Deactivate ${u.full_name}? They lose admin access immediately.`}
+                    onRun={() => deactivate(u.id)}
+                  >
                     Deactivate
-                  </Button>
+                  </AsyncButton>
                 )}
               </td>
             </tr>
@@ -157,9 +162,14 @@ export default function StaffAdmin() {
           ))}
         </fieldset>
 
-        <Button className="self-start" onClick={create} disabled={!email || !name || !password}>
+        <AsyncButton
+          className="self-start"
+          busyLabel="Creating…"
+          onRun={create}
+          disabled={!email || !name || !password}
+        >
           Create staff account
-        </Button>
+        </AsyncButton>
       </Card>
     </div>
   )

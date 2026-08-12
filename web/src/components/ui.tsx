@@ -1,7 +1,13 @@
 // Shared primitives. Every interactive element keeps a visible focus ring and a
 // 44px touch target (docs/10 §4).
 
-import { type ReactNode, type InputHTMLAttributes, type ButtonHTMLAttributes, useId } from 'react'
+import {
+  type ReactNode,
+  type InputHTMLAttributes,
+  type ButtonHTMLAttributes,
+  useId,
+  useState,
+} from 'react'
 
 export function Button({
   variant = 'primary',
@@ -23,6 +29,67 @@ export function Button({
     <button className={`${base} ${styles} ${className}`} {...rest}>
       {children}
     </button>
+  )
+}
+
+// A Button for anything that writes to the server.
+//
+// Two problems it exists to solve, both of which bit every mutating action in
+// the admin app:
+//
+//  1. Nothing stopped a second click while the first request was in flight.
+//     The call sites pass `crypto.randomUUID()` as the idempotency key, and a
+//     fresh key per click is a *different* operation as far as the API is
+//     concerned — so the key that exists to make a retry safe did nothing for
+//     the case it is most needed in. Verifying a payment twice writes two rows
+//     to payment_events, and those are immutable (D26).
+//
+//  2. Irreversible actions fired on a single click with no confirmation.
+//     `confirm` is the native dialog on purpose: it is keyboard-accessible and
+//     focus-correct for free, it matches the window.prompt already used for
+//     mismatch reasons in FinanceQueue, and a hand-rolled modal would need a
+//     focus trap to be no better.
+//
+// Every call site renders its own failure through ErrorNote, so onRun is
+// expected to catch. The catch here is the backstop for one that forgets: an
+// async onClick that rejects becomes an unhandled promise rejection, which is
+// both invisible to the operator and noisy enough to bury real errors. Logging
+// keeps the mistake findable without inventing a second error surface.
+export function AsyncButton({
+  onRun,
+  confirm,
+  busyLabel,
+  children,
+  disabled,
+  ...rest
+}: Omit<ButtonHTMLAttributes<HTMLButtonElement>, 'onClick'> & {
+  variant?: 'primary' | 'secondary' | 'ghost' | 'danger'
+  onRun: () => Promise<unknown>
+  confirm?: string
+  busyLabel?: string
+}) {
+  const [busy, setBusy] = useState(false)
+
+  return (
+    <Button
+      {...rest}
+      disabled={busy || disabled}
+      aria-busy={busy || undefined}
+      onClick={async () => {
+        if (busy) return
+        if (confirm && !window.confirm(confirm)) return
+        setBusy(true)
+        try {
+          await onRun()
+        } catch (err) {
+          console.error('AsyncButton action failed', err)
+        } finally {
+          setBusy(false)
+        }
+      }}
+    >
+      {busy ? (busyLabel ?? children) : children}
+    </Button>
   )
 }
 

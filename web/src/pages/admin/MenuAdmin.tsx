@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, type ListResponse, type MenuItem } from '../../lib/api'
 import { SearchBox } from '../../components/SearchBox'
-import { Badge, Button, ErrorNote, Spinner } from '../../components/ui'
+import { AsyncButton, Badge, ErrorNote, Spinner } from '../../components/ui'
 import { StoreSelect, Table, todayISO, useStores } from './common'
 import { rupiah } from '../../lib/format'
 import { t } from '../../i18n'
@@ -100,18 +100,28 @@ export default function MenuAdmin() {
               <td className="tabular px-3 py-2">{item.stock_left ?? '—'}</td>
               <td className="px-3 py-2">
                 <div className="flex gap-2">
+                  {/* 86 takes the dish off the customer menu straight away.
+                      Lifting it is the safe direction, so only one of the two
+                      asks. */}
                   {item.is_available ? (
-                    <Button variant="secondary" onClick={() => eightySix(item)}>
+                    <AsyncButton
+                      variant="secondary"
+                      busyLabel="…"
+                      confirm={`Mark ${item.name_id} as 86? Customers stop being able to order it immediately.`}
+                      onRun={() => eightySix(item)}
+                    >
                       86
-                    </Button>
+                    </AsyncButton>
                   ) : (
-                    <Button variant="secondary" onClick={() => lift(item)}>
+                    <AsyncButton variant="secondary" busyLabel="…" onRun={() => lift(item)}>
                       Lift 86
-                    </Button>
+                    </AsyncButton>
                   )}
-                  <Button variant="ghost" onClick={() => setStock(item)}>
+                  {/* setStock already prompts for the number, which doubles as
+                      the confirmation step. */}
+                  <AsyncButton variant="ghost" busyLabel="…" onRun={() => setStock(item)}>
                     Set stock
-                  </Button>
+                  </AsyncButton>
                 </div>
               </td>
             </tr>

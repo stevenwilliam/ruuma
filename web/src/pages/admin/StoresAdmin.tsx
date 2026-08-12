@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react'
 import { api, type ListResponse, type Store } from '../../lib/api'
 import { SearchBox } from '../../components/SearchBox'
-import { Badge, Button, Card, EmptyState, ErrorNote } from '../../components/ui'
+import { AsyncButton, Badge, Card, EmptyState, ErrorNote } from '../../components/ui'
 import { Table } from './common'
 
 export default function StoresAdmin() {
@@ -54,9 +54,18 @@ export default function StoresAdmin() {
               <td className="px-3 py-2">
                 {/* Deactivating hides the store but never touches its orders
                     (BR-2.1.11). */}
-                <Button variant="secondary" onClick={() => toggle(s)}>
+                <AsyncButton
+                  variant="secondary"
+                  busyLabel="Saving…"
+                  confirm={
+                    s.is_active
+                      ? `Deactivate ${s.name}? It disappears from the customer site at once; existing orders are untouched.`
+                      : undefined
+                  }
+                  onRun={() => toggle(s)}
+                >
                   {s.is_active ? 'Deactivate' : 'Activate'}
-                </Button>
+                </AsyncButton>
               </td>
             </tr>
           ))}

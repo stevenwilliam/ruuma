@@ -4,7 +4,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, type ListResponse, type Staff } from '../../lib/api'
 import { SearchBox } from '../../components/SearchBox'
-import { Badge, Button, Card, EmptyState, ErrorNote, Spinner } from '../../components/ui'
+import { AsyncButton, Badge, Button, Card, EmptyState, ErrorNote, Spinner } from '../../components/ui'
 import { StoreSelect, todayISO, useStores } from './common'
 import { rupiah, slotLabel } from '../../lib/format'
 import { t } from '../../i18n'
@@ -160,18 +160,38 @@ export default function OrdersBoard({ staff }: { staff: Staff }) {
                   <div className="flex flex-wrap items-center gap-2">
                     <span className="tabular text-sm">{rupiah(order.total)}</span>
                     <div className="ml-auto flex gap-2 no-print">
+                      {/* Every one of these posts a fresh idempotency key, so
+                          a double click used to be two distinct transitions
+                          rather than one retried. AsyncButton holds the button
+                          until the request settles. */}
                       {canCook && order.status === 'ACCEPTED' && (
-                        <Button variant="secondary" onClick={() => advance(order.id, 'IN_KITCHEN')}>
+                        <AsyncButton
+                          variant="secondary"
+                          busyLabel="…"
+                          onRun={() => advance(order.id, 'IN_KITCHEN')}
+                        >
                           Start
-                        </Button>
+                        </AsyncButton>
                       )}
                       {canCook && order.status === 'IN_KITCHEN' && (
-                        <Button variant="secondary" onClick={() => advance(order.id, 'READY')}>
+                        <AsyncButton
+                          variant="secondary"
+                          busyLabel="…"
+                          onRun={() => advance(order.id, 'READY')}
+                        >
                           Ready
-                        </Button>
+                        </AsyncButton>
                       )}
+                      {/* Hand-over is the terminal state — there is no screen
+                          that walks it back. */}
                       {canHandOver && order.status === 'READY' && (
-                        <Button onClick={() => advance(order.id, 'PICKED_UP')}>Picked up</Button>
+                        <AsyncButton
+                          busyLabel="…"
+                          confirm={`Hand ${order.order_code} over to ${order.contact_name}? This closes the order.`}
+                          onRun={() => advance(order.id, 'PICKED_UP')}
+                        >
+                          Picked up
+                        </AsyncButton>
                       )}
                     </div>
                   </div>

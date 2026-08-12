@@ -5,7 +5,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { api, type ListResponse } from '../../lib/api'
 import { SearchBox } from '../../components/SearchBox'
-import { Badge, Button, Card, EmptyState, ErrorNote, Spinner } from '../../components/ui'
+import { AsyncButton, Badge, Button, Card, EmptyState, ErrorNote, Spinner } from '../../components/ui'
 import { StoreSelect, Table, todayISO, useStores } from './common'
 import { rupiah } from '../../lib/format'
 import { t } from '../../i18n'
@@ -187,10 +187,25 @@ export default function FinanceQueue() {
               <td className="px-3 py-2">
                 {item.status === 'SUBMITTED' && (
                   <div className="flex gap-2">
-                    <Button onClick={() => verify(item)}>Verify</Button>
-                    <Button variant="secondary" onClick={() => reject(item)}>
+                    {/* Verifying is a money decision recorded immutably in
+                        payment_events (D26), and for a matching amount there
+                        was previously nothing between one click and the write.
+                        A mismatch already prompts for a reason, which is its
+                        own confirmation, so only the clean case needs this. */}
+                    <AsyncButton
+                      onRun={() => verify(item)}
+                      busyLabel="Verifying…"
+                      confirm={
+                        item.mismatch === 0
+                          ? `Verify ${rupiah(item.amount_due)} received for ${item.order_code}? This is recorded permanently.`
+                          : undefined
+                      }
+                    >
+                      Verify
+                    </AsyncButton>
+                    <AsyncButton variant="secondary" busyLabel="Rejecting…" onRun={() => reject(item)}>
                       Reject
-                    </Button>
+                    </AsyncButton>
                   </div>
                 )}
               </td>
