@@ -2,7 +2,8 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet, useLocation } from 'react-router-dom'
 import { cartCount, loadCart } from '../lib/cart'
 import { WhatsAppButton } from './WhatsAppButton'
-import { currentLang, setLang, t } from '../i18n'
+import { LanguagePicker } from './LanguagePicker'
+import { t } from '../i18n'
 
 export function CustomerLayout() {
   const copy = t()
@@ -78,7 +79,7 @@ export function CustomerLayout() {
                 </>
               )}
             </NavLink>
-            <LanguageToggle tone="light" />
+            <LanguagePicker tone="light" />
           </nav>
         </div>
       </header>
@@ -137,33 +138,3 @@ function navClass({ isActive }: { isActive: boolean }) {
   ].join(' ')
 }
 
-// tone selects the contrast set. The customer header is an emerald fill and the
-// admin header is a light surface, and this button appears in both — a single
-// hard-coded colour is invisible in one of them.
-export function LanguageToggle({ tone = 'dark' }: { tone?: 'light' | 'dark' }) {
-  const [lang, setCurrent] = useState(currentLang())
-  const copy = t()
-
-  return (
-    <button
-      type="button"
-      aria-label={copy.a11y.languageToggle}
-      onClick={() => {
-        const next = lang === 'id' ? 'en' : 'id'
-        setLang(next)
-        setCurrent(next)
-        // The catalogues are read at render time, so a reload is the simplest
-        // correct way to re-render every string.
-        window.location.reload()
-      }}
-      className={[
-        'inline-flex min-h-[44px] min-w-[44px] items-center justify-center rounded-lg px-3 text-sm font-medium uppercase',
-        tone === 'light'
-          ? 'text-primary-fg/90 hover:bg-white/15 hover:text-primary-fg'
-          : 'text-muted hover:bg-primary-subtle',
-      ].join(' ')}
-    >
-      {lang}
-    </button>
-  )
-}

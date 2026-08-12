@@ -59,7 +59,7 @@ def worst_case(bg, emerald, emerald_a, sand, sand_a, grain, grain_a):
 THEMES = {
     "light": {
         "bg": rgb("f7f9f8"),
-        "wash": (rgb("277066"), 0.07, rgb("b4783c"), 0.05, rgb("000000"), 0.025),
+        "wash": (rgb("a8dece"), 0.35, rgb("f2ce9e"), 0.30, rgb("000000"), 0.03),
         "foregrounds": {
             "--text": rgb("101915"),
             "--text-muted": rgb("4e5d58"),
@@ -67,16 +67,18 @@ THEMES = {
         },
         # Kept in the report as the reason --primary-ink exists at all.
         "informational": {"--primary (fill, not text)": rgb("277066")},
+        "base": rgb("f7f9f8"),
     },
     "dark": {
         "bg": rgb("0d1512"),
-        "wash": (rgb("4fa695"), 0.10, rgb("c8965a"), 0.05, rgb("ffffff"), 0.035),
+        "wash": (rgb("123c34"), 0.45, rgb("3a2c18"), 0.35, rgb("ffffff"), 0.04),
         "foregrounds": {
             "--text": rgb("e8f0ec"),
             "--text-muted": rgb("9fb3ab"),
             "--primary-ink": rgb("6fbcac"),
         },
         "informational": {"--primary (fill, not text)": rgb("4fa695")},
+        "base": rgb("0d1512"),
     },
 }
 
@@ -86,7 +88,14 @@ def main() -> int:
 
     for name, theme in THEMES.items():
         composite = worst_case(theme["bg"], *theme["wash"])
-        print(f"\n{name.upper()} — worst-case background {to_hex(composite)}")
+        # How far the wash actually moves the canvas. A wash nobody can see is
+        # a wash that is not doing its job — the first version of this shifted
+        # --bg by 36/765 and read as a flat page.
+        shift = sum(abs(a - b) for a, b in zip(composite, theme["base"]))
+        print(f"\n{name.upper()} — worst-case background {to_hex(composite)} "
+              f"(shift {shift:.0f}/765 from {to_hex(theme['base'])})")
+        if shift < 60:
+            print("  NOTE  the wash is probably imperceptible at this strength")
 
         for token, colour in theme["foregrounds"].items():
             r = ratio(colour, composite)

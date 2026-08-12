@@ -156,16 +156,16 @@ export default function ItemPage() {
         )}
       </Field>
 
-      {/* pe-20 keeps the add-to-cart button clear of the floating WhatsApp
-          button, which is fixed to the same corner (56px wide plus a 16px
-          inset). Without it the FAB sits on top of the primary conversion
-          control on this page.
-          Released at `xl`, not `sm`: this bar is max-w-5xl inside px-4, so it
-          spans the full viewport width until 1056px and only then starts
-          pulling away from the right edge. At 1280 its right edge is 1152 and
-          the FAB starts at 1208 — the first breakpoint where they genuinely
-          cannot meet. */}
-      <div className="sticky bottom-3 flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 pe-20 xl:pe-3">
+      {/* pe-32 keeps the add-to-cart button clear of the floating WhatsApp
+          button, which is fixed to the same corner (112px wide plus a 16px
+          inset = 128px). Without it the FAB sits on top of the primary
+          conversion control on this page.
+          Released at `2xl`, not `xl`: this bar is max-w-5xl inside px-4, so it
+          spans the full viewport width until 1056px. At the 1280 `xl` mark the
+          bar ends at 1152 and the FAB starts at exactly 1152 — they touch. At
+          1536 the bar ends at 1280 and the FAB starts at 1408, which is the
+          first breakpoint with real clearance. */}
+      <div className="sticky bottom-3 flex items-center gap-3 rounded-2xl border border-border bg-surface p-3 pe-32 2xl:pe-3">
         <div className="flex items-center gap-2">
           <Button variant="secondary" aria-label="-" onClick={() => setQty((q) => Math.max(1, q - 1))}>
             −

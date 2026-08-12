@@ -135,9 +135,21 @@ The page canvas is not flat. Behind everything sit two fixed layers on
 
 | Token | Light | Dark | What it is |
 |---|---|---|---|
-| `--wash-emerald` | `rgba(39,112,102,.07)` | `rgba(79,166,149,.10)` | two of the three radial pools, from `--primary` |
-| `--wash-sand` | `rgba(180,120,60,.05)` | `rgba(200,150,90,.05)` | one warm pool, so a food page does not read clinical |
-| `--grain-opacity` | `0.025` | `0.035` | inline SVG turbulence over the whole viewport |
+| `--wash-emerald` | `rgba(168,222,206,.35)` | `rgba(18,60,52,.45)` | two of the three radial pools |
+| `--wash-sand` | `rgba(242,206,158,.30)` | `rgba(58,44,24,.35)` | one warm pool, so a food page does not read clinical |
+| `--grain-opacity` | `0.03` | `0.04` | inline SVG turbulence over the whole viewport |
+
+**The pools are picked by luminance direction, and that is the whole trick.**
+Dark text only loses contrast when the background gets *darker*, so in light
+mode the pools are light and saturated — a soft mint and a soft peach — and run
+at 30–35% while the AA table barely moves. Dark mode inverts it: pools deeper
+than `--bg`, so light text never loses.
+
+The first version used `--primary` itself at 7%. Emerald is darker than `--bg`,
+so it paid contrast on every percent and was still invisible — it shifted the
+canvas by 36/765 and shipped looking like a flat page. Colour, not opacity, is
+what makes a wash readable. `scripts/contrast.py` now reports that shift and
+warns below 60/765.
 
 The grain is not decoration for its own sake: a gradient this large bands
 visibly on an 8-bit panel without it, and it supplies the handmade warmth a
@@ -146,13 +158,14 @@ restaurant wants and a dashboard does not.
 **These alphas are a contrast budget, not a taste setting.** Every ratio in the
 table above is measured against `--bg`, and the wash sits between `--bg` and the
 text. The worst case is all three pools overlapping plus grain, which composites
-to `#D3DBD7` in light and `#293D35` in dark. Against those:
+to `#C8DCCB` in light and `#223931` in dark. Against those:
 
 | Foreground | On worst-case wash | Verdict |
 |---|---|---|
-| `--text` | 12.73 (light) / 10.01 (dark) | pass |
-| `--text-muted` | 4.92 / 5.26 | pass |
-| `--primary` **as text** | 4.15 / 3.99 | **fails** — use `--primary-ink` |
+| `--text` | 12.41 (light) / 10.61 (dark) | pass |
+| `--text-muted` | 4.80 / 5.57 | pass |
+| `--primary-ink` | 5.43 / 5.55 | pass |
+| `--primary` **as text** | 4.05 / 4.23 | **fails** — use `--primary-ink` |
 
 Two consequences, both already applied:
 
@@ -195,8 +208,8 @@ Rules that are not negotiable:
 
 ### 2.3 Floating contact button
 
-A WhatsApp FAB sits bottom-right of every customer page, above the safe-area
-inset (`env(safe-area-inset-bottom)`, which is why `index.html` sets
+A WhatsApp FAB sits bottom-right of every customer page — **112px**, above the
+safe-area inset (`env(safe-area-inset-bottom)`, which is why `index.html` sets
 `viewport-fit=cover`). It is `z-40` — the same layer as the sticky header, never
 above it, so a future modal still wins.
 
@@ -210,8 +223,35 @@ when the number is blank, whatever the enabled flag says.** A contact button
 that opens a chat with nobody is worse than no button: the customer believes
 they have asked, and waits.
 
-On the item page the sticky add-to-cart bar reserves `pe-20` up to the `xl`
-breakpoint so the FAB never covers the primary conversion control.
+On the item page the sticky add-to-cart bar reserves `pe-32` (128px = the
+button plus its inset) up to the `2xl` breakpoint so the FAB never covers the
+primary conversion control. Not `xl`: at 1280 the bar ends at 1152 and the
+button starts at exactly 1152, so they touch — 1536 is the first width with
+real clearance.
+
+At 112px on a 375px phone this is a large object, deliberately. It is the only
+element allowed to sit over the page.
+
+### 2.4 Language picker
+
+Two options side by side — flag plus `ID`/`EN` — with the active one marked by
+`aria-pressed` and a filled pill.
+
+It replaced a single button labelled with the *current* language, which is
+ambiguous in the way every one-button language toggle is: a button label
+normally describes what pressing it does, so "EN" reads as "you are in English"
+to half of users and "switch to English" to the other half. Showing both
+removes the question.
+
+On flags: a flag is a country, not a language, and the usual objection is real.
+It survives here because ruuma ships exactly two languages for one market, where
+both flags are unambiguous — and because **the flag is never the only signal**.
+Every option keeps its visible `ID`/`EN` label, the SVGs are `aria-hidden`, and
+the pair carries a group label from the message catalogue. Nothing depends on
+recognising the artwork.
+
+Inline SVG, not the flag emoji: emoji flags do not render at all on Windows,
+which falls back to a bare letter pair.
 
 ## 3. Typography
 

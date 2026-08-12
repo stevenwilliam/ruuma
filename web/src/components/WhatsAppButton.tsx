@@ -61,7 +61,10 @@ export function WhatsAppButton() {
       // overlap, and a higher value would put this above a future modal.
       // The bottom offset carries the iOS home-indicator inset on top of the
       // base spacing, which is why index.html sets viewport-fit=cover.
-      className="no-print fixed right-4 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-105 focus-visible:scale-105"
+      // 112px, double the original 56. That is a large object on a 375px
+      // phone, so it is the one thing allowed to sit over the page and it
+      // stays out of the way of the sticky add-to-cart bar (see Item.tsx).
+      className="no-print fixed right-4 z-40 flex h-28 w-28 items-center justify-center rounded-full bg-[#25D366] text-white shadow-lg transition-transform hover:scale-105 focus-visible:scale-105"
       style={{ bottom: 'calc(1rem + env(safe-area-inset-bottom, 0px))' }}
     >
       {/* An SVG, not the emoji: emoji render as someone else's artwork per
@@ -71,7 +74,7 @@ export function WhatsAppButton() {
           recoloured logo would not read as WhatsApp. */}
       <svg
         viewBox="0 0 24 24"
-        className="h-7 w-7"
+        className="h-14 w-14"
         fill="currentColor"
         aria-hidden="true"
         focusable="false"

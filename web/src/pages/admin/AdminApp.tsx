@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react'
 import { NavLink, Route, Routes, useNavigate } from 'react-router-dom'
 import { api, tokens, type Staff } from '../../lib/api'
 import { Button, Card, ErrorNote, Field, Spinner, TextInput } from '../../components/ui'
-import { LanguageToggle } from '../../components/Layout'
+import { LanguagePicker } from '../../components/LanguagePicker'
 import { t } from '../../i18n'
 
 import Dashboard from './Dashboard'
@@ -63,7 +63,7 @@ export default function AdminApp() {
             <span className="text-sm text-muted">
               {staff.full_name} · {staff.role}
             </span>
-            <LanguageToggle />
+            <LanguagePicker />
             <Button
               variant="secondary"
               onClick={() => {
