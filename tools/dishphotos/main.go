@@ -19,6 +19,8 @@
 package main
 
 import (
+	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"image"
@@ -67,10 +69,15 @@ const (
 // exception: it is 16:9, it lives with the brand assets rather than the dishes,
 // and it must never be picked up by the menu grid.
 var targets = map[string]struct {
-	path string
-	w, h int
+	path    string
+	w, h    int
+	quality int
+	lqipTo  string
 }{
-	"BG-HERO": {brandDir + "/backdrop.jpg", 1920, 1080},
+	// The backdrop sits under an 82-86% scrim, so JPEG quality below the usual
+	// 84 is invisible and halves the bytes on a first paint that people wait
+	// for. lqipTo receives a base64 thumbnail — see writeLQIP.
+	"BG-HERO": {brandDir + "/backdrop.jpg", 1920, 1080, 68, root + "/web/src/backdrop-lqip.css"},
 }
 
 var picks = map[string]string{
@@ -78,7 +85,15 @@ var picks = map[string]string{
 	// table: authentically Indonesian, natively 16:9 at 5120x2880, and CC
 	// BY-SA 4.0 — commercial use permitted, attribution required, which
 	// /credits already renders.
-	"BG-HERO": "Nasi Padang dishes at Simpang Raya Jam Gadang Restaurant - Guguk Panjang, Bukit Tinggi, West Sumatra.jpg",
+	// Ayam bakar on a black slate plate: shallow depth of field, warm bokeh,
+	// natively 4000x1840 so a 16:9 backdrop costs almost no crop.
+	//
+	// It replaced a nasi padang table shot that was rejected on sight — a
+	// canteen table mid-meal with a discarded face mask on it. Commons has no
+	// genuine Indonesian fine-dining photography; this is the closest thing to
+	// it in a commercially-licensed source, and it is a stopgap for ruuma's own
+	// photography exactly like the menu cards are (D31).
+	"BG-HERO": "Ayam bakar.jpg",
 	"IDN-001": "Nasi Goreng Kampung.jpg",
 	"IDN-002": "Ayam bakar.jpg",
 	"IDN-003": "Beef rendang.jpg",
@@ -106,7 +121,7 @@ var picks = map[string]string{
 // Indonesian dish names are used untranslated where Commons files are indexed
 // that way — "sate ayam" finds satay, "chicken satay" finds rather less.
 var searchFor = map[string]string{
-	"BG-HERO": "nasi padang table dishes",
+	"BG-HERO": "ayam bakar grilled chicken",
 	"IDN-001": "nasi goreng",
 	"IDN-002": "ayam bakar grilled chicken",
 	"IDN-003": "rendang",
@@ -247,12 +262,18 @@ func fetch(client *http.Client, sku, file string) (*credit, error) {
 		if err != nil {
 			return nil, err
 		}
-		path, outW, outH := filepath.Join(outDir, sku+".jpg"), cardW, cardH
+		path, outW, outH, q := filepath.Join(outDir, sku+".jpg"), cardW, cardH, 84
+		lqip := ""
 		if t, ok := targets[sku]; ok {
-			path, outW, outH = t.path, t.w, t.h
+			path, outW, outH, q, lqip = t.path, t.w, t.h, t.quality, t.lqipTo
 		}
-		if err := writeCard(path, img, outW, outH); err != nil {
+		if err := writeCard(path, img, outW, outH, q); err != nil {
 			return nil, err
+		}
+		if lqip != "" {
+			if err := writeLQIP(lqip, img); err != nil {
+				return nil, err
+			}
 		}
 
 		return &credit{
@@ -304,7 +325,7 @@ func download(client *http.Client, src string) (image.Image, error) {
 // writeCard centre-crops to 4:3 and scales to the card size. Cropping rather
 // than letterboxing: a band of grey around a photo looks like a broken image,
 // and food photographs are almost always centre-weighted.
-func writeCard(path string, src image.Image, outW, outH int) error {
+func writeCard(path string, src image.Image, outW, outH, quality int) error {
 	b := src.Bounds()
 	want := float64(outW) / float64(outH)
 	got := float64(b.Dx()) / float64(b.Dy())
@@ -330,7 +351,7 @@ func writeCard(path string, src image.Image, outW, outH int) error {
 		return err
 	}
 	defer f.Close()
-	return jpeg.Encode(f, dst, &jpeg.Options{Quality: 84})
+	return jpeg.Encode(f, dst, &jpeg.Options{Quality: quality})
 }
 
 // search returns the title of the first image file matching a query. Namespace
@@ -457,4 +478,55 @@ func trunc(s string, n int) string {
 		return s
 	}
 	return s[:n-1] + "…"
+}
+
+// writeLQIP emits a low-quality image placeholder as a CSS custom property.
+//
+// The backdrop is a few hundred kilobytes, so on a cold load the page painted
+// flat --bg first and the photograph appeared afterwards — a visible blank
+// then a pop. This is the standard fix: a 32px-wide JPEG, base64'd into the
+// stylesheet itself, so it paints the moment CSS parses with no extra request.
+// The browser then swaps in the full image over the top of it.
+//
+// Written to its own generated file rather than into index.css, so a
+// regenerated blob never collides with hand-edited rules.
+func writeLQIP(path string, src image.Image) error {
+	const w, h = 32, 18
+
+	b := src.Bounds()
+	want := float64(w) / float64(h)
+	got := float64(b.Dx()) / float64(b.Dy())
+	crop := b
+	if got > want {
+		cw := int(float64(b.Dy()) * want)
+		off := (b.Dx() - cw) / 2
+		crop = image.Rect(b.Min.X+off, b.Min.Y, b.Min.X+off+cw, b.Max.Y)
+	} else if got < want {
+		chh := int(float64(b.Dx()) / want)
+		off := (b.Dy() - chh) / 2
+		crop = image.Rect(b.Min.X, b.Min.Y+off, b.Max.X, b.Min.Y+off+chh)
+	}
+
+	tiny := image.NewRGBA(image.Rect(0, 0, w, h))
+	xdraw.CatmullRom.Scale(tiny, tiny.Bounds(), src, crop, xdraw.Src, nil)
+
+	var buf bytes.Buffer
+	if err := jpeg.Encode(&buf, tiny, &jpeg.Options{Quality: 40}); err != nil {
+		return err
+	}
+	encoded := base64.StdEncoding.EncodeToString(buf.Bytes())
+
+	css := fmt.Sprintf(`/* Generated by tools/dishphotos — do not edit.
+   A %dx%d placeholder for the page backdrop, inlined so it paints as soon as
+   the stylesheet does. See docs/10 §2.1. */
+:root {
+  --backdrop-lqip: url("data:image/jpeg;base64,%s");
+}
+`, w, h, encoded)
+
+	if err := os.WriteFile(path, []byte(css), 0o600); err != nil {
+		return err
+	}
+	fmt.Printf("  .. LQIP %d bytes base64 -> %s\n", len(encoded), filepath.Base(path))
+	return nil
 }

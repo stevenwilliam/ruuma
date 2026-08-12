@@ -130,11 +130,44 @@ colour-coded alone.
 
 ### 2.1 Page backdrop
 
-A photograph, not a gradient: nasi padang on a warung table, fetched from
-Wikimedia Commons by `tools/dishphotos` under **CC BY-SA 4.0** and credited at
-`/credits` alongside the dish photos (D31). It lives at
-`web/public/brand/backdrop.jpg`, 1920×1080, and is fetched as the pseudo-SKU
-`BG-HERO`.
+A photograph, not a gradient: ayam bakar on a black slate plate — shallow
+depth of field, warm bokeh — fetched from Wikimedia Commons by
+`tools/dishphotos` under **CC BY-SA 4.0** and credited at `/credits` alongside
+the dish photos (D31). It lives at `web/public/brand/backdrop.jpg`, 1920×1080
+at quality 68, and is fetched as the pseudo-SKU `BG-HERO`.
+
+**Loading is three layers deep, because a backdrop that appears after the page
+is worse than none.** The first version painted flat `--bg`, then popped the
+photograph in:
+
+1. `<link rel="preload" as="image" fetchpriority="high">` in `index.html`. The
+   backdrop is referenced from a CSS custom property, so without this the
+   browser cannot discover it until the stylesheet is fetched *and* parsed.
+   Measured on a throttled 400 kbps connection, the preload moves it to
+   **+382 ms — ahead of the stylesheet at 471 ms and far ahead of the JS
+   bundles at 4.1 s and 8.9 s.** The photograph is now ready before React
+   renders anything.
+2. A **32×18 base64 placeholder** generated into `web/src/backdrop-lqip.css`
+   and imported by `index.css`, so something photographic paints the moment
+   CSS parses, with no request at all. It is the bottom of the three
+   `background-image` layers; the real photo covers it when it arrives.
+3. Quality 68 rather than 84. Under an 82–86% scrim the difference is
+   invisible and it halved the file: **466 KB → 216 KB.**
+
+Regenerate both with `go run ./tools/dishphotos BG-HERO`; the placeholder file
+is generated, never hand-edited.
+
+**On the image itself:** Commons has no genuine Indonesian fine-dining
+photography — the searches return Turkish pastry and lotus seeds from the
+curated quality pools, and the Indonesian results are canteen tables. Two
+candidates were rejected on sight, which is the D31 rule doing its job: a
+tumpeng shot that was three identifiable faces filling the frame (a likeness
+problem CC BY-SA does not cover, since it licenses copyright and not
+personality rights), and a nasi campur plate carrying a rival restaurant's
+menu card, third-party branding and a glass of beer — poor fit for a menu that
+tags dishes halal. The nasi padang table this replaced had a discarded face
+mask on it. **This is a stopgap for ruuma's own photography exactly like the
+menu cards are.**
 
 | Token | Light | Dark | What it is |
 |---|---|---|---|
