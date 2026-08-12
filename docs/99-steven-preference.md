@@ -317,11 +317,51 @@ naming the docs it touched; `PROGRESS.md` is updated as work lands.
 - [ ] Auth, roles and the permissions matrix, with negative tests per role
 - [ ] `docs/12-security.md` green, with the tests that prove each control
 - [ ] Deployment handbook → user guide → admin guide
-- [ ] Claude Code plugin baseline installed (section 13)
+- [ ] SEO baseline from section 13 (titles, OG, robots, sitemap, JSON-LD)
+- [ ] Claude Code plugin baseline installed (section 14)
 
 ---
 
-## 13. Claude Code tooling baseline
+## 13. SEO — every public web project ships this
+
+Anything with a public-facing page is **SEO-friendly from the first commit**,
+not retrofitted before launch. The baseline, in rough order of what actually
+costs money when it is missing:
+
+- **Per-route `<title>` and `<meta name="description">`.** A SPA that never
+  changes its title gives every page the same name in search results, browser
+  tabs and history. One small hook called from each page; no library.
+- **Open Graph + Twitter card tags with an absolute image URL.** This is the
+  one people skip and regret: **link-preview bots do not execute JavaScript.**
+  A client-rendered app with no OG tags in the served HTML shows a blank card
+  when the link is pasted into WhatsApp, Instagram DM or Slack. For a business
+  whose customers share links in chat, that is the highest-value SEO item on
+  the list, and it has nothing to do with Google.
+- **`robots.txt`, and it must disallow the private surface** — admin, cart,
+  checkout, order history, auth. Crawlers do reach them, and a transactional
+  page in an index is a support problem, not a ranking one.
+- **`sitemap.xml`** for the pages that should be indexed, referenced from
+  `robots.txt`.
+- **One `<h1>` per page**, headings in order, no skipping levels for styling.
+- **`<html lang>` set, and updated when the language toggle changes.**
+- **Canonical URL** on every page, absolute, on the production domain.
+- **JSON-LD structured data** matching the domain — `Restaurant` + `Menu` for
+  food, `Product` + `Offer` for commerce, `Organization` otherwise. This is
+  what produces a rich result rather than a plain blue link.
+- **Real URLs for real things.** Filters and sort belong in the query string so
+  a state can be linked and shared, not held only in component state.
+
+**Client-side rendering is the constraint behind most of the above.** Google
+executes JS; nothing else reliably does. Static tags in `index.html` cover the
+whole site with one correct preview, which is usually enough for phase 1. When
+per-page previews start to matter — a dish, a product, an article — the fix is
+prerendering or SSR, and it is a real project. Decide it deliberately rather
+than discovering it after launch.
+
+Verify with `curl`, not a browser: `curl -s <url> | grep -i 'og:\|<title'`
+shows what a preview bot sees, which is exactly what the browser hides from you.
+
+## 14. Claude Code tooling baseline
 
 Plugins are installed at **user scope** so they carry across every project on
 the machine rather than being re-chosen per repo:

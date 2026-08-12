@@ -18,6 +18,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"image"
 	"image/color"
@@ -41,19 +42,74 @@ const (
 )
 
 func main() {
-	if err := run(); err != nil {
+	// Off by default: this tool is normally run to regenerate an icon, and the
+	// placeholder cards share a directory with real photography (D31).
+	force := flag.Bool("force", false,
+		"overwrite existing dish images, including real photography")
+	flag.Parse()
+
+	if err := run(*force); err != nil {
 		log.Fatalf("genassets: %v", err)
 	}
 }
 
-func run() error {
+func run(force bool) error {
 	if err := lightLogo(); err != nil {
 		return err
 	}
 	if err := icons(); err != nil {
 		return err
 	}
-	return cards()
+	if err := shareCard(); err != nil {
+		return err
+	}
+	return cards(force)
+}
+
+// shareCard renders the 1200x630 image used by og:image and twitter:image.
+//
+// It exists because ruuma's customers share links in WhatsApp, and a link with
+// no share image gets a blank card — the single highest-value SEO asset for
+// this business, and nothing to do with Google. 1200x630 is the size every
+// platform crops from; handing them the square favicon instead means the
+// wordmark gets cut off left and right.
+//
+// Emerald fill with the reversed-out wordmark, matching the site header, so a
+// pasted link is recognisably ruuma before anyone reads the title.
+func shareCard() error {
+	const w, h = 1200, 630
+
+	f, err := os.Open(filepath.Join(brandNS, "ruuma-logo-white.png"))
+	if err != nil {
+		return fmt.Errorf("open white logo (run lightLogo first): %w", err)
+	}
+	defer f.Close()
+
+	logo, err := png.Decode(f)
+	if err != nil {
+		return fmt.Errorf("decode white logo: %w", err)
+	}
+
+	canvas := image.NewNRGBA(image.Rect(0, 0, w, h))
+	// --primary. Flat, not a gradient: a share card is rendered at thumbnail
+	// size in a chat list, where a gradient turns to mud.
+	xdraw.Draw(canvas, canvas.Bounds(), &image.Uniform{color.NRGBA{0x27, 0x70, 0x66, 0xFF}},
+		image.Point{}, xdraw.Src)
+
+	// Half the width, centred. Same clear-space discipline as the icons.
+	lb := logo.Bounds()
+	target := w / 2
+	scale := float64(target) / float64(lb.Dx())
+	lh := int(math.Round(float64(lb.Dy()) * scale))
+	dst := image.Rect(0, 0, target, lh).Add(image.Pt((w-target)/2, (h-lh)/2))
+	xdraw.CatmullRom.Scale(canvas, dst, logo, lb, xdraw.Over, nil)
+
+	path := filepath.Join(brandNS, "ruuma-share-1200x630.png")
+	if err := writePNG(path, canvas); err != nil {
+		return err
+	}
+	fmt.Printf("  ruuma-share-1200x630.png (%dx%d)\n", w, h)
+	return nil
 }
 
 // lightLogo derives the reversed-out wordmark used on the emerald header and
@@ -167,18 +223,41 @@ var skus = []string{
 	"DRK-001", "DRK-002", "DRK-003", "DRK-004",
 }
 
-func cards() error {
+// cards writes the placeholder dish images — but only for SKUs that do not
+// already have one.
+//
+// This skip is not an optimisation, it is a guard. The placeholders live at the
+// same paths as the real Wikimedia photography fetched by tools/dishphotos
+// (D31), so the original unconditional loop silently replaced 21 reviewed,
+// licence-checked photographs with coloured blobs the moment anyone ran this
+// tool to regenerate an icon. It did exactly that on 2026-08-12 and was caught
+// only because the files happened to be committed.
+//
+// Pass -force to overwrite deliberately.
+func cards(force bool) error {
 	if err := os.MkdirAll(menuDir, 0o750); err != nil {
 		return fmt.Errorf("mkdir %s: %w", menuDir, err)
 	}
+
+	written, kept := 0, 0
 	for _, sku := range skus {
-		img := card(sku)
 		path := filepath.Join(menuDir, sku+".jpg")
-		if err := writeJPEG(path, img); err != nil {
+		if !force {
+			if _, err := os.Stat(path); err == nil {
+				kept++
+				continue
+			}
+		}
+		if err := writeJPEG(path, card(sku)); err != nil {
 			return err
 		}
+		written++
 	}
-	fmt.Printf("  %d menu cards in %s\n", len(skus), menuDir)
+
+	fmt.Printf("  %d menu cards written, %d existing kept in %s\n", written, kept, menuDir)
+	if kept > 0 {
+		fmt.Printf("  (existing images are left alone — pass -force to replace real photography)\n")
+	}
 	return nil
 }
 

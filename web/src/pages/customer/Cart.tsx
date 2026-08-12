@@ -4,9 +4,12 @@ import { cartCount, clearCart, estimateTotal, loadCart, saveCart, type Cart } fr
 import { Button, Card, EmptyState } from '../../components/ui'
 import { rupiah } from '../../lib/format'
 import { t } from '../../i18n'
+import { useSeo, useNoIndex } from '../../lib/seo'
 
 export default function CartPage() {
   const copy = t()
+  useSeo(copy.cart.title)
+  useNoIndex()
   const navigate = useNavigate()
   const [cart, setCart] = useState<Cart>(() => loadCart())
 

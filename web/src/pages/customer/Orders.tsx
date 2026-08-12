@@ -7,9 +7,12 @@ import { longDate, rupiah, slotLabel } from '../../lib/format'
 import { t } from '../../i18n'
 import { useNavigate } from 'react-router-dom'
 import { loadCart, saveCart, selectStore } from '../../lib/cart'
+import { useSeo, useNoIndex } from '../../lib/seo'
 
 export default function OrdersPage() {
   const copy = t()
+  useSeo(copy.order.history)
+  useNoIndex()
   const navigate = useNavigate()
   const [orders, setOrders] = useState<Order[] | null>(null)
   const [error, setError] = useState('')

@@ -10,8 +10,77 @@
     <link rel="apple-touch-icon" href="/brand/ruuma-apple-touch-icon.png" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="theme-color" content="#277066" />
-    <meta name="description" content="Ruuma Eatery — pesan makanan Indonesia, Tionghoa, dan Barat untuk diambil di gerai pilihan Anda." />
-    <title>Ruuma Eatery</title>
+
+    <title>Ruuma Eatery — Pesan Makanan Indonesia, Tionghoa & Barat</title>
+    <meta
+      name="description"
+      content="Pesan makanan Indonesia, Tionghoa, dan Barat dari Ruuma Eatery untuk diambil di gerai Menara Matahari, Lippo Karawaci. Pilih menu, pilih jam ambil, bayar transfer."
+    />
+    <link rel="canonical" href="https://ruuma.id/" />
+
+    <!-- Share preview.
+         These are static and in the served HTML on purpose. ruuma is a
+         client-rendered SPA, and link-preview bots — WhatsApp, Instagram,
+         Facebook, Slack — do NOT execute JavaScript. Anything the React app
+         sets at runtime is invisible to them, so a pasted ruuma link would
+         show a blank card. Since customers share links in WhatsApp, this is
+         the highest-value SEO markup on the site and it has nothing to do with
+         Google.
+         The consequence is that every URL previews as the site, not as the
+         specific dish. Per-page previews need prerendering or SSR; recorded in
+         docs/08 rather than half-built here. -->
+    <meta property="og:type" content="restaurant.restaurant" />
+    <meta property="og:site_name" content="Ruuma Eatery" />
+    <meta property="og:title" content="Ruuma Eatery — Pesan Makanan Indonesia, Tionghoa & Barat" />
+    <meta
+      property="og:description"
+      content="Pesan makanan Indonesia, Tionghoa, dan Barat untuk diambil di gerai Menara Matahari, Lippo Karawaci."
+    />
+    <meta property="og:url" content="https://ruuma.id/" />
+    <meta property="og:locale" content="id_ID" />
+    <meta property="og:locale:alternate" content="en_US" />
+    <!-- Absolute, not root-relative: a preview bot fetches this URL from its
+         own servers with no page context to resolve a relative path against. -->
+    <meta property="og:image" content="https://ruuma.id/brand/ruuma-share-1200x630.png" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Ruuma Eatery" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Ruuma Eatery — Pesan Makanan Indonesia, Tionghoa & Barat" />
+    <meta
+      name="twitter:description"
+      content="Pesan makanan Indonesia, Tionghoa, dan Barat untuk diambil di gerai Menara Matahari, Lippo Karawaci."
+    />
+    <meta name="twitter:image" content="https://ruuma.id/brand/ruuma-share-1200x630.png" />
+
+    <!-- Structured data for the one trading outlet (D30). This is what turns a
+         plain blue link into a rich result with hours, address and phone.
+         It is hand-maintained and must be updated when the outlet details
+         change or a second store opens — index.html is static and cannot read
+         sys_parameters. Flagged in docs/10 §6. -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "Restaurant",
+        "name": "Ruuma Eatery",
+        "url": "https://ruuma.id/",
+        "image": "https://ruuma.id/brand/ruuma-share-1200x630.png",
+        "servesCuisine": ["Indonesian", "Chinese", "Western"],
+        "priceRange": "$$",
+        "currenciesAccepted": "IDR",
+        "paymentAccepted": "Bank transfer",
+        "address": {
+          "@type": "PostalAddress",
+          "streetAddress": "Jl. Boulevard Palem Raya No. 7, Lippo Karawaci Central",
+          "addressLocality": "Tangerang",
+          "addressRegion": "Banten",
+          "postalCode": "15811",
+          "addressCountry": "ID"
+        },
+        "hasMenu": "https://ruuma.id/menu",
+        "acceptsReservations": "False"
+      }
+    </script>
   </head>
   <body>
     <div id="root"></div>

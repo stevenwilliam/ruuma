@@ -56,7 +56,13 @@ _Last updated: 2026-08-02 (delivery workflow complete: docs → build → harden
 - ✅ **Public config endpoint (D35)** — `GET /api/v1/public-config` on a
       compiled allowlist; 4 tests in `test/security/public_config_test.go`
       including a planted-secret leak probe
-- ✅ **Contrast budget in the gate (D36/D37)** — `make contrast` recomputes
+- ✅ **SEO baseline (D40)** — per-route titles, `noindex` on the transactional
+      surface, robots + sitemap, JSON-LD, generated 1200×630 share card; 5 tests
+      in `web/src/__tests__/seo.test.tsx`
+- ⬜ **Per-page share previews need prerendering/SSR** — static OG tags give the
+      site one correct card; a shared dish link previews as the site, not the
+      dish (`docs/08`)
+- ✅ **Contrast budget in the gate (D36/D37/D39)** — `make contrast` recomputes
       every AA pair against the ambient wash, not against a flat `--bg`, and
       also fails the wash for being *imperceptible*: the first version passed
       every ratio and shipped looking like a flat page

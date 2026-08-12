@@ -1,0 +1,24 @@
+# ruuma.id — https://ruuma.id/robots.txt
+#
+# Everything transactional or personal is disallowed. Crawlers do reach these
+# paths, and an order-tracking or checkout URL in a search index is a support
+# problem long before it is a ranking one.
+#
+# This is a hint, not access control. Every one of these routes is also
+# protected by auth server-side (docs/12); robots.txt only stops well-behaved
+# crawlers from indexing them.
+
+User-agent: *
+Allow: /$
+Allow: /menu
+Allow: /credits
+
+Disallow: /admin
+Disallow: /auth
+Disallow: /cart
+Disallow: /checkout
+Disallow: /orders
+Disallow: /order/
+Disallow: /api/
+
+Sitemap: https://ruuma.id/sitemap.xml

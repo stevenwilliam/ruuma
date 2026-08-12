@@ -9,9 +9,11 @@ import { SearchBox } from '../../components/SearchBox'
 import { Badge, Button, Card, EmptyState, ErrorNote, Spinner } from '../../components/ui'
 import { longDate } from '../../lib/format'
 import { t } from '../../i18n'
+import { useSeo } from '../../lib/seo'
 
 export default function StoresPage() {
   const copy = t()
+  useSeo(copy.stores.title)
   const navigate = useNavigate()
   const [stores, setStores] = useState<Store[] | null>(null)
   const [error, setError] = useState('')

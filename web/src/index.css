@@ -9,7 +9,7 @@
   --surface: #ffffff;
   --border: #dce5e1;
   --text: #101915;
-  --text-muted: #4e5d58;
+  --text-muted: #414d49;
   --primary: #277066;
   --primary-hover: #1f5b53;
   --primary-fg: #ffffff;
@@ -60,30 +60,38 @@
    The pools are chosen by LUMINANCE DIRECTION, which is the whole trick. Dark
    text only loses contrast when the background gets darker, so in light mode
    the pools are light and saturated — a soft mint and a soft peach — and can
-   run at 30-35% alpha while the AA table barely moves. The first version used
+   run at 58-65% alpha while the AA table still passes. The first version used
    --primary itself at 7%, which is darker than --bg: it cost contrast on every
-   percent and was still invisible. Colour, not opacity, is what makes this
-   readable.
+   percent and was still invisible. Colour direction, not opacity, is what buys
+   the headroom.
    Dark mode inverts the rule: the pools are deeper than --bg for the same
    reason, so light text never loses. */
 :root {
-  --wash-emerald: rgba(168, 222, 206, 0.35);
-  --wash-sand: rgba(242, 206, 158, 0.30);
-  --grain-opacity: 0.03;
+  --wash-emerald: rgba(168, 222, 206, 0.65);
+  --wash-sand: rgba(242, 206, 158, 0.58);
+  --grain-opacity: 0.035;
+  /* Cards are translucent so the wash reads *through* the content, not only in
+     the gutters. This is the fix for the version that shipped invisible: the
+     wash paints at z-index -1, behind the page, and the page is an emerald
+     header, an emerald footer and a grid of solid white cards. On a phone that
+     left a few percent of the viewport where it could show at all. */
+  --surface-card: rgba(255, 255, 255, 0.72);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:not([data-theme='light']) {
-    --wash-emerald: rgba(18, 60, 52, 0.45);
-    --wash-sand: rgba(58, 44, 24, 0.35);
-    --grain-opacity: 0.04;
+    --wash-emerald: rgba(18, 60, 52, 0.7);
+    --wash-sand: rgba(58, 44, 24, 0.6);
+    --grain-opacity: 0.045;
+    --surface-card: rgba(20, 32, 28, 0.72);
   }
 }
 
 :root[data-theme='dark'] {
-  --wash-emerald: rgba(18, 60, 52, 0.45);
-  --wash-sand: rgba(58, 44, 24, 0.35);
-  --grain-opacity: 0.04;
+  --wash-emerald: rgba(18, 60, 52, 0.7);
+  --wash-sand: rgba(58, 44, 24, 0.6);
+  --grain-opacity: 0.045;
+  --surface-card: rgba(20, 32, 28, 0.72);
 }
 
 /* The flat colour goes on html so it paints the canvas; body::before can then
@@ -114,11 +122,11 @@ body::before {
     radial-gradient(42rem 42rem at 12% 8%, var(--wash-emerald), transparent 70%),
     radial-gradient(38rem 38rem at 88% 22%, var(--wash-sand), transparent 68%),
     radial-gradient(46rem 46rem at 65% 92%, var(--wash-emerald), transparent 72%);
-  animation: wash-drift 32s ease-in-out infinite alternate;
+  animation: wash-drift 24s ease-in-out infinite alternate;
   will-change: transform;
 }
 
-/* Grain, at 2.5% light / 3.5% dark. It is what stops a large flat gradient
+/* Grain, at 3.5% light / 4.5% dark. It is what stops a large flat gradient
    banding on an 8-bit panel, and it is the "handmade" half of the warmth — a
    restaurant is not a dashboard. Inline SVG turbulence: no request, and CSP
    allows data: under img-src. */
@@ -132,12 +140,17 @@ body::after {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='140' height='140' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
+/* The travel is deliberately large. At 2% over 32s the movement was below the
+   threshold anyone notices — an animation nobody perceives is the same as no
+   animation, and it still costs a compositor layer. 6% over 24s is a slow
+   visible breath. inset:-15% on the layer is what keeps an edge from ever
+   entering the viewport at this amplitude. */
 @keyframes wash-drift {
   from {
     transform: translate3d(0, 0, 0) scale(1);
   }
   to {
-    transform: translate3d(-2%, 1.5%, 0) scale(1.06);
+    transform: translate3d(-6%, 4%, 0) scale(1.12);
   }
 }
 

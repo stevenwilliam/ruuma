@@ -56,6 +56,8 @@ export const en: typeof IDCatalog = {
     },
   },
   menu: {
+    seoDescription:
+      'The full Ruuma Eatery menu: Indonesian, Chinese and Western dishes. Pick your food, pick a pickup time, then pay by bank transfer.',
     title: 'Menu',
     filters: 'Filters',
     all: 'All',

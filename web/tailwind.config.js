@@ -17,6 +17,10 @@ export default {
         // and stays untouched; on the ambient wash it only reaches 4.15:1, so
         // primary-coloured text uses this darker shade instead (docs/10 §2.1).
         'primary-ink': 'var(--primary-ink)',
+        // Translucent, so the ambient wash reads through the cards rather
+        // than only in the gutters (docs/10 §2.1). --surface stays opaque for
+        // inputs and the sticky bar, which sit over scrolling content.
+        card: 'var(--surface-card)',
         'primary-fg': 'var(--primary-fg)',
         'primary-subtle': 'var(--primary-subtle)',
         warning: 'var(--warning)',

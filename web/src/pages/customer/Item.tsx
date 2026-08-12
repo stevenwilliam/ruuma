@@ -8,6 +8,7 @@ import { addLine, buildLine, loadCart, saveCart, selectedStoreId } from '../../l
 import { Badge, Button, Card, ErrorNote, Field, Spinner, TextInput } from '../../components/ui'
 import { rupiah } from '../../lib/format'
 import { localeDesc, localeName, t } from '../../i18n'
+import { useSeo } from '../../lib/seo'
 
 type ItemResponse = { item: MenuItem; option_groups: OptionGroup[] }
 
@@ -22,6 +23,11 @@ export default function ItemPage() {
   const [selected, setSelected] = useState<string[]>([])
   const [qty, setQty] = useState(1)
   const [notes, setNotes] = useState('')
+
+  // Empty until the dish loads, so the tab keeps the previous title rather than
+  // flashing a bare brand suffix. Must sit above the early returns below —
+  // hooks cannot be called conditionally.
+  useSeo(data ? localeName(data.item) : '', data ? localeDesc(data.item) : undefined)
 
   useEffect(() => {
     if (!storeId || !id) return

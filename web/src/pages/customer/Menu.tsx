@@ -10,6 +10,7 @@ import { SearchBox } from '../../components/SearchBox'
 import { Badge, Card, EmptyState, ErrorNote, Spinner } from '../../components/ui'
 import { rupiah } from '../../lib/format'
 import { localeDesc, localeName, t } from '../../i18n'
+import { useSeo } from '../../lib/seo'
 
 const CUISINES = ['indonesian', 'chinese', 'western', 'other'] as const
 
@@ -27,6 +28,10 @@ export default function MenuPage() {
   const [sort, setSort] = useState('')
 
   const [stores, setStores] = useState<Store[]>([])
+
+  // Title follows the resolved outlet, so an indexed page is named for the
+  // store rather than the generic word "Menu".
+  useSeo(store?.name ?? copy.menu.title, copy.menu.seoDescription)
 
   // The store is resolved, not asked for. With a single outlet (D30) there is
   // exactly one answer, so picking it silently is the whole point; the picker

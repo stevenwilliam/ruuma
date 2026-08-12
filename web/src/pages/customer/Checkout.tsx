@@ -22,9 +22,12 @@ import { SlotPicker } from '../../components/SlotPicker'
 import { Button, Card, ErrorNote, Field, Spinner, TextInput } from '../../components/ui'
 import { rupiah } from '../../lib/format'
 import { t } from '../../i18n'
+import { useSeo, useNoIndex } from '../../lib/seo'
 
 export default function CheckoutPage() {
   const copy = t()
+  useSeo(copy.checkout.title)
+  useNoIndex()
   const navigate = useNavigate()
   const storeId = selectedStoreId()
   const cart = loadCart()

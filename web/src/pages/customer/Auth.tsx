@@ -7,11 +7,14 @@ import { useNavigate, useSearchParams } from 'react-router-dom'
 import { api, tokens, type Session } from '../../lib/api'
 import { Button, Card, ErrorNote, Field, TextInput } from '../../components/ui'
 import { t } from '../../i18n'
+import { useSeo, useNoIndex } from '../../lib/seo'
 
 type Mode = 'signin' | 'signup' | 'phone'
 
 export default function AuthPage() {
   const copy = t()
+  useSeo(copy.auth.signIn)
+  useNoIndex()
   const navigate = useNavigate()
   const [params] = useSearchParams()
   const next = params.get('next') ?? '/menu'

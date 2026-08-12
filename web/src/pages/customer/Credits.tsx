@@ -11,6 +11,7 @@ import credits from '../../credits.json'
 import { SearchBox } from '../../components/SearchBox'
 import { Card, EmptyState } from '../../components/ui'
 import { t } from '../../i18n'
+import { useSeo } from '../../lib/seo'
 
 type Credit = {
   sku: string
@@ -23,6 +24,7 @@ type Credit = {
 
 export default function CreditsPage() {
   const copy = t()
+  useSeo(copy.credits.title, copy.credits.intro)
   const [query, setQuery] = useState('')
   const rows = credits as Credit[]
 

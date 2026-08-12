@@ -59,19 +59,20 @@ def worst_case(bg, emerald, emerald_a, sand, sand_a, grain, grain_a):
 THEMES = {
     "light": {
         "bg": rgb("f7f9f8"),
-        "wash": (rgb("a8dece"), 0.35, rgb("f2ce9e"), 0.30, rgb("000000"), 0.03),
+        "wash": (rgb("a8dece"), 0.65, rgb("f2ce9e"), 0.58, rgb("000000"), 0.035),
         "foregrounds": {
             "--text": rgb("101915"),
-            "--text-muted": rgb("4e5d58"),
+            "--text-muted": rgb("414d49"),
             "--primary-ink": rgb("1f5b53"),
         },
         # Kept in the report as the reason --primary-ink exists at all.
         "informational": {"--primary (fill, not text)": rgb("277066")},
         "base": rgb("f7f9f8"),
+        "card": (rgb("ffffff"), 0.72),
     },
     "dark": {
         "bg": rgb("0d1512"),
-        "wash": (rgb("123c34"), 0.45, rgb("3a2c18"), 0.35, rgb("ffffff"), 0.04),
+        "wash": (rgb("123c34"), 0.70, rgb("3a2c18"), 0.60, rgb("ffffff"), 0.045),
         "foregrounds": {
             "--text": rgb("e8f0ec"),
             "--text-muted": rgb("9fb3ab"),
@@ -79,6 +80,7 @@ THEMES = {
         },
         "informational": {"--primary (fill, not text)": rgb("4fa695")},
         "base": rgb("0d1512"),
+        "card": (rgb("14201c"), 0.72),
     },
 }
 
@@ -102,6 +104,18 @@ def main() -> int:
             ok = r >= AA_BODY
             failures += not ok
             print(f"  {'PASS' if ok else 'FAIL'}  {token:<16} {r:5.2f}")
+
+        # Cards are translucent, so their text sits on surface-over-wash, not
+        # on a flat --surface. Checked separately because that is where most
+        # body copy actually lives.
+        card_fill, card_alpha = theme["card"]
+        card = over(card_fill, card_alpha, composite)
+        print(f"  card {to_hex(card)} (translucent surface over the wash)")
+        for token, colour in theme["foregrounds"].items():
+            r = ratio(colour, card)
+            ok = r >= AA_BODY
+            failures += not ok
+            print(f"  {'PASS' if ok else 'FAIL'}  {token:<16} {r:5.2f}  on card")
 
         for token, colour in theme["informational"].items():
             r = ratio(colour, composite)

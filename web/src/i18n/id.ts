@@ -54,6 +54,8 @@ export const id = {
     } as Record<string, string>,
   },
   menu: {
+    seoDescription:
+      'Menu lengkap Ruuma Eatery: masakan Indonesia, Tionghoa, dan Barat. Pilih hidangan, pilih jam pengambilan, lalu bayar lewat transfer bank.',
     title: 'Menu',
     filters: 'Filter',
     all: 'Semua',

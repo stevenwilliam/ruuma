@@ -51,6 +51,23 @@ driver assignment and tracking · dine-in QR ordering · multi-language menu
 authoring beyond ID/EN · inventory linked to daily stock · customer-facing
 "nearest store with capacity" suggestions.
 
+### Per-page share previews — prerendering or SSR
+
+The SEO baseline shipped in D39 covers the site with **one** correct preview:
+static Open Graph tags in `index.html`, because link-preview bots do not run
+JavaScript. Every ruuma URL therefore previews as "Ruuma Eatery", not as the
+dish being shared.
+
+Making a shared dish link show *that dish* — its photo, name and price — needs
+the HTML for `/menu/:id` to exist before JavaScript runs. That means
+prerendering the menu routes at build time, or server-side rendering. Either is
+a real project: the menu is per-store and availability changes hourly, so a
+prerender has to be regenerated on catalogue changes, and SSR pulls the React
+app onto the Go server or a Node process beside it.
+
+Worth doing when WhatsApp sharing of individual dishes becomes a real acquisition
+channel. Until then the single site-wide card is the honest trade.
+
 ## Explicitly not planned
 
 Table reservations, subscriptions, inter-store stock transfer, and a native

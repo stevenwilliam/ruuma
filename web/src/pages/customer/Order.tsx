@@ -8,11 +8,15 @@ import { api, newIdempotencyKey, type Order } from '../../lib/api'
 import { Badge, Button, Card, ErrorNote, Field, Spinner, TextInput } from '../../components/ui'
 import { longDate, rupiah, slotLabel } from '../../lib/format'
 import { t } from '../../i18n'
+import { useSeo, useNoIndex } from '../../lib/seo'
 
 export default function OrderPage() {
   const copy = t()
   const { id } = useParams()
   const [order, setOrder] = useState<Order | null>(null)
+
+  useSeo(order ? `${copy.order.code} ${order.order_code}` : '')
+  useNoIndex()
   const [error, setError] = useState('')
   const [declared, setDeclared] = useState('')
   const [sender, setSender] = useState('')
