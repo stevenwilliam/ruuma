@@ -317,3 +317,56 @@ naming the docs it touched; `PROGRESS.md` is updated as work lands.
 - [ ] Auth, roles and the permissions matrix, with negative tests per role
 - [ ] `docs/12-security.md` green, with the tests that prove each control
 - [ ] Deployment handbook → user guide → admin guide
+- [ ] Claude Code plugin baseline installed (section 13)
+
+---
+
+## 13. Claude Code tooling baseline
+
+Plugins come from the official marketplace, `claude-plugins-official`
+(`anthropics/claude-plugins-official`), and are installed at **user scope** so
+they carry across every project on the machine rather than being re-chosen per
+repo:
+
+```bash
+claude plugin install security-guidance@claude-plugins-official --scope user
+claude plugin install frontend-design@claude-plugins-official   --scope user
+claude plugin install gopls-lsp@claude-plugins-official          --scope user
+```
+
+| Plugin | Why it is in the baseline | Cost |
+| --- | --- | --- |
+| `security-guidance` | Four harness hooks — `SessionStart`, `UserPromptSubmit`, `PostToolUse`, `Stop`. Pattern warnings on every edit, LLM diff review on stop, agentic commit reviewer covering injection, XSS, SSRF, hardcoded secrets and 25+ other classes. This is **enforced by the harness, not by Claude's judgement**, which is what makes it worth having next to "auto-commit and push without asking" (section 2) — without it nothing stands between a generated secret and `origin/main`. | ~0 tokens (hooks are harness-only) |
+| `frontend-design` | One skill; produces distinctive, production-grade UI instead of generic AI-looking layouts. Pairs with the brand token set in `docs/10-*`. | ~59 tok always-on, ~2k per invocation |
+| `gopls-lsp` | Go language server — compiler-accurate references, call hierarchies and implementations. Beats any heuristic index on a Go codebase. | LSP, no model context |
+
+**Skills are model-triggered, not automatic.** Claude sees only each skill's
+name and one-line description, and invokes it when the task matches; a slash
+command (`/frontend-design`) forces it. Anything that must run **every** time is
+a hook, not a skill — that is the whole reason `security-guidance` is in the
+baseline rather than a written instruction.
+
+Deliberately **not** installed, and why:
+
+- **Cloud-vendor database plugins** (`neon`, `supabase`, `prisma`, `alloydb`,
+  `cloud-sql-postgresql`, `aiven`) — every one assumes managed Postgres. The
+  house default is native PostgreSQL on a single node (section 9).
+- **Generic PostgreSQL "best practice" skills** — they teach `NUMERIC`/`DECIMAL`
+  for money, which contradicts the money-as-integers rule (section 6). Revisit
+  only for operational work — `EXPLAIN ANALYZE`, index health, VACUUM/MVCC —
+  once there is real query volume.
+- **Commercial SaaS scanners** (`aikido`, `42crunch`, `stackhawk`,
+  `sonatype-guide`, `vanta`) — all require paid accounts.
+- **`superdesign`** — sends codebase context to an external design canvas.
+- **`graphify`** — knowledge-graph indexer. Its value starts around 150k+ LOC or
+  where architecture is undocumented; a project built to section 4's layering
+  with a written dependency rule already states what the graph would infer, and
+  `gopls-lsp` is more accurate for the Go side. Reconsider if a project grows
+  past ~150k LOC or needs a cross-language view (Go → SQL → React → docs) that
+  an LSP cannot give.
+- **Go idiom skill packs** (e.g. `samber/cc-skills-golang`) — genuinely useful
+  language-fundamentals skills, but a third of the pack evangelises the author's
+  own libraries (`lo`, `mo`, `do`, `oops`, `slog`) and DI frameworks
+  (`uber-fx`, `uber-dig`, `google-wire`) that conflict with the pinned stack
+  (section 5) and manual wiring in `cmd/api/main.go`. Install selectively or not
+  at all.
