@@ -35,6 +35,24 @@ this file wins.
 - If I say "all defaults", take every default you proposed and go.
 - I write in English and Indonesian; the doc set stays in English.
 
+### My control words
+
+| I say | You do |
+|---|---|
+| **`coding stop`** | **Change nothing.** No edits, no new files, no commits, no migrations, no deploys, no config changes — until I say `coding start`. |
+| **`coding start`** | The hold is lifted. Resume normally. |
+
+`coding stop` is a hard gate, not a preference to weigh against the task. It
+holds across turns until I lift it — a new request while it is on is a request
+to *discuss and plan*, not a licence to resume. If I ask for something that
+needs a change while the hold is on, tell me what you would do and wait.
+
+Reading, searching, running read-only commands, answering questions, drafting a
+plan and explaining trade-offs are all still fine. What stops is anything that
+writes: the filesystem, the database, a running service, or a remote.
+
+If you are unsure whether the hold is still on, it is. Ask.
+
 ---
 
 ## 2. How I want Claude to work

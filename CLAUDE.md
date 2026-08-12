@@ -110,6 +110,15 @@ math (see §4).
 
 - **Owner is Steven, nickname "ven".** When he answers a quoted list of
   questions, a line beginning `ven:` is his answer to the question above it.
+- **`coding stop` means change nothing** — no edits, no new files, no commits,
+  no migrations, no deploys, no config changes — until he says `coding start`.
+  It is a hard gate, not a preference to weigh against the task, and it **holds
+  across turns** until lifted. A new request while the hold is on is a request
+  to discuss and plan, not a licence to resume: say what you would do, then
+  wait. Reading, searching, read-only commands, answering and planning are all
+  still fine; what stops is anything that writes — the filesystem, the
+  database, a running service, or a remote. If you are unsure whether the hold
+  is still on, it is.
 - **Update the related documents on every interaction** — including talk-only
   turns that settle a decision, not just code changes. A decision that isn't in
   the docs didn't happen (see §8).
