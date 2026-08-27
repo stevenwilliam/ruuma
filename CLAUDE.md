@@ -108,6 +108,12 @@ math (see §4).
 
 ## 6. Working conventions (how I want Claude to operate)
 
+- **`.claude/skills/impeccable/SKILL.md` is the standard of work.** Read it
+  before writing a change and again before reporting one as done. Its rules are
+  not general advice — each was written after the matching bug reached a
+  running site, and the incident log names them. When a new class of silent
+  failure bites, add the row and the rule. The measured numbers for this
+  project's palette and type live in `design.md` beside it.
 - **Owner is Steven, nickname "ven".** When he answers a quoted list of
   questions, a line beginning `ven:` is his answer to the question above it.
 - **`coding stop` means change nothing** — no edits, no new files, no commits,
