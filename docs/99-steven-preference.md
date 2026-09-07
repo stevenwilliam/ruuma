@@ -15,12 +15,66 @@ project unchanged.
 2. Generate that project's `CLAUDE.md` from sections 3–9 below, then add only
    the project-specific parts (domain, locale, stack deviations).
 3. Create the numbered doc set from section 10.
-4. Ask me the open product questions **in one batch, each with a proposed
+4. **Install the `impeccable` skill** (section 15) at
+   `.claude/skills/impeccable/SKILL.md` before writing any code. It is the
+   standard of work, and it is worth most on day one.
+5. Ask me the open product questions **in one batch, each with a proposed
    default** (section 2), then build.
 
 Where this file conflicts with a project's own `CLAUDE.md`, the project wins —
 it is the newer, more specific decision. Where it conflicts with a habit,
 this file wins.
+
+### Keeping this file in sync — Steven's standing instruction
+
+**When I ask you to update my preferences, update this file in EVERY project on
+the server and push each one.** Not only the repository we happen to be working
+in. This file is the single portable standard, and four different versions of it
+is the same as having none — which is exactly what had happened by 2026-09-07:
+`ruuma` was ten sections behind and two others differed from each other.
+
+**`thenie_v2` is excluded.** Steven, 2026-09-07: *"for thenie_v2 dont touch it,
+it is special project."* It does not receive this file and is not synced. Leave
+it alone unless he says otherwise.
+
+**Every project's `CLAUDE.md` must name this file and state that it is a
+source.** A `CLAUDE.md` that does not point here will drift, and nobody will
+notice until the rule that was supposed to prevent something did not.
+
+The relationship, so it is unambiguous:
+
+- `99-steven-preference.md` — portable, project-agnostic, **identical in every
+  repo**. Improvements that are not specific to one project belong here so they
+  reach the next project.
+- `CLAUDE.md` — generated from §3–§9 of this file plus that project's domain,
+  locale and deliberate deviations. It is **the newer, more specific decision**,
+  so it wins locally — but it must say which parts of this file it is departing
+  from, and why.
+
+After syncing, check each project still complies with any rule that is new to
+it, and report where it does not rather than quietly leaving a contradiction.
+
+### What I actually come back to most
+
+Everything below matters, but these are the ones I invoke over and over.
+Counted across the decision logs of five projects (138 logged decisions —
+ruuma 46, marketing_calendar 43, evermore 31, healthy_catering 18):
+
+| Theme | Appearances | What it means in practice |
+|---|---|---|
+| **Audit** | 19 | Who did it, when, why. Append-only. Especially anything that bypasses a control. |
+| **Configurable without a deploy** | 16 | If it could change, it is a `sys_parameters` row with CRUD, not a constant. I *will* retune it in production. |
+| **Reversible over optimal** | 10 | I pick the option that can be undone. Copy rather than move. Coexist on a second port rather than stop a running service. |
+| **Phase 1 versus later** | 28 | I defer comfortably and explicitly. "for now" and "phase 1" are real boundaries, not hedges. |
+| **Manual where money moves** | 7 | Bank transfer, manual verification, no auto-refund. I do not want the machine moving money unattended. |
+
+Two more that appear in every project without exception: **money as whole-unit
+integers**, and **pipe-delimited CSV on every grid**.
+
+**Offered a choice, I usually take the narrower rule.** Given "a fixed recipient
+list" or "that list plus every actor", I took the fixed list. Given a nullable
+column "in case", I took no column. I would rather add a thing later than carry
+a half-built one now.
 
 ---
 
@@ -33,14 +87,63 @@ this file wins.
 - I answer fast and short. Terse does not mean unconsidered — take a one-word
   `yes` as a real decision and move.
 - If I say "all defaults", take every default you proposed and go.
+- **Silence takes the proposal.** If you give me a recommendation and I answer
+  the other questions but not that one, I have accepted it. Log it as *decided
+  by default* so it stays visible and cheap to reverse.
 - I write in English and Indonesian; the doc set stays in English.
+
+### How I write, and how to read it
+
+Lowercase, minimal punctuation, no greeting and no preamble. Short imperative
+clauses, often several in one comma-spliced line. I type fast and I do not
+proofread. **Read for intent, never for the letter.**
+
+Observed often enough to be worth writing down:
+
+| I type | I mean |
+|---|---|
+| `buttom` | button — *or* bottom. Context decides; sometimes both in one line |
+| `fiture` | feature |
+| `moderen` | modern |
+| `miss leading` | misleading |
+| `respected path` | the respective / appropriate path |
+| `real all documents` | read all documents |
+| `alot` | a lot |
+| `i still not see` | I still don't see |
+| `become more elegant` | make it more elegant |
+
+None of these is a new term. Do not build a `buttom` component.
+
+> Some of this section is **inferred from how I have actually behaved**, not
+> stated by me: the spelling table, "silence takes the proposal", and the
+> supply/decide split in §2 were read out of five projects' decision logs rather
+> than written by me. They have held so far. Correct them in place when I
+> contradict one, and date the correction — a file about a person that nobody
+> updates becomes a caricature.
+
+I also do not explain why. A request arrives as a request; the reasoning is
+there if you ask, but asking costs a round trip — **infer first and state the
+inference** ("I read this as X; say so if not"). That costs me one word to
+correct and nothing if you were right.
 
 ### My control words
 
 | I say | You do |
 |---|---|
-| **`coding stop`** | **Change nothing.** No edits, no new files, no commits, no migrations, no deploys, no config changes — until I say `coding start`. |
-| **`coding start`** | The hold is lifted. Resume normally. |
+| **`coding stop`** / **`code stop`** | **Change nothing.** No edits, no new files, no commits, no migrations, no deploys, no config changes — until I lift it. |
+| **`coding start`** / **`code start`** | The hold is lifted. Resume normally. |
+
+I use both spellings interchangeably. Treat them as the same word.
+
+**The hold is scoped to a project, not to the session.** I will say things like
+*"don't touch this project since it is in `code stop` mode, but you can do
+anything in the other one"* — and I mean exactly that.
+
+**A later, more specific instruction of mine overrides an earlier general one.**
+If I say `code stop` and then, in the same message, tell you to create a
+specific file and push it, the narrow instruction wins. Where the two genuinely
+conflict *and* the action is destructive, tell me what you would do and wait —
+but do not use the hold as a reason to ignore a direct request.
 
 `coding stop` is a hard gate, not a preference to weigh against the task. It
 holds across turns until I lift it — a new request while it is on is a request
@@ -62,6 +165,24 @@ If you are unsure whether the hold is still on, it is. Ask.
   proposed default so I can answer "yes" or "all defaults".
 - **Never stop partway.** If the plan says "build all modules A–Z", build all of
   them in one push. Do not deliver two modules and ask whether to continue.
+- **Once the documents, requirements and business rules are agreed, BUILD TO
+  THE END WITHOUT STOPPING.** The planning phase is where I answer questions;
+  the build phase is where you work. During the build:
+  - Do not stop to ask me to confirm a milestone, review an interim result, or
+    choose between two reasonable options. Pick the better one, write down why,
+    and keep going.
+  - **A blocker does not stop the build.** Work around it, note it, and carry
+    on with everything that does not depend on it — then hand me the whole list
+    at the end. One batch of blockers after a finished build beats five
+    interruptions during it.
+  - **Fine-tuning and correction come after, not during.** Something imperfect
+    that works is a note for the end; only something *wrong* gets fixed on the
+    spot.
+  - Report at the end: what was built, what was verified by running it, what is
+    still blocked and on whom. That is when I answer.
+  This is the single thing that most changes how much gets done in a session:
+  every stop costs a context switch for both of us, and I would rather read one
+  honest report than approve nine checkpoints.
 - **Auto-commit and push after every completed change**, without asking. Small,
   focused commits, conventional-commit messages (`feat(...)`, `fix(...)`,
   `docs(...)`). `main` is the working branch unless I say otherwise.
@@ -82,6 +203,43 @@ If you are unsure whether the hold is still on, it is. Ask.
 - **OS/server guides use full absolute paths**, never relative ones, so a
   copy-pasted command can never run in the wrong directory.
 - Prefer editing existing files and reusing `platform/*` over new scaffolding.
+
+### How I report a problem
+
+**Symptom only. I will not tell you where to look.** A whole bug report from me
+looks like *"i cant visit the web from my laptop"*. Diagnosis is your job.
+
+Before touching anything, **check the runbooks** — `RUN-WHEN-BACK.md` and the
+deployment handbook. More than once the cause was already written down there
+from a previous project, and re-deriving it cost an afternoon.
+
+### How I give design feedback
+
+I react to what I see, in my own words, and I expect you to translate:
+
+> *"the yellow color background is /menu not a good color, use the same green
+> color of background in homepage"*
+
+- **I name a reference, not a specification.** "the same green as the homepage"
+  is the whole brief — go and measure what that green actually is.
+- **When I have a colour in mind I give it** — *"i prefer #778aab, others is mix
+  and match"*. The hex is fixed; the rest is yours.
+- **"play with the colour" means exercise judgement, not ask.** So does *"any
+  input or additional feature is welcome"* — that is a real invitation to
+  propose things I did not think of.
+- **My aesthetic choice never overrides AA.** If the palette I picked puts a
+  2.41 border on every input, correct it and tell me the number. Do not ship it,
+  and do not stop to ask.
+
+### What I supply, and what you decide
+
+**Mine:** real bank accounts, legal entity and NPWP, production domains and TLS,
+SMTP relay and DNS records, API keys, brand artwork and photography, real role
+names, recipient lists, and the network ranges for an allowlist.
+
+**Yours:** everything else — schema shape, module boundaries, error model, index
+strategy, test strategy, naming, and every default in a question batch. I will
+overrule what I disagree with, quickly and in about three words.
 
 ---
 
@@ -140,7 +298,11 @@ a dependency has to earn its place.
 
 **Frontend (when there is a UI): React 18 + Vite + TypeScript + Tailwind.**
 Pin React to 18 — not 19. Structure `web/src/{components,lib,pages}`. Node 20.
-No PWA unless I ask for one.
+**Never a PWA** — no manifest, no service worker, no install prompt, no offline
+shell. This is not a default to weigh; it is a prohibition. Do not propose one,
+and do not add "PWA-ready" scaffolding on the way past. Where a phone matters,
+the answer is a **mobile-first responsive web app** now, and a **native app
+against the same versioned REST API** later.
 
 **Not my defaults, don't reach for them unprompted:** an ORM's automigrate as
 the source of truth, GraphQL, microservices, Kubernetes, a NoSQL primary store,
@@ -200,6 +362,30 @@ it is implemented **and to the test that proves it**. Non-negotiables:
 - **Injection:** parameter binding everywhere, raw SQL only with placeholders,
   never string concatenation. Allow-list validation at the adapter edge; the
   domain assumes valid input. No `dangerouslySetInnerHTML`. No shell-outs.
+- **Validate and sanitize every input on BOTH sides — frontend and backend.**
+  They are two different jobs and neither replaces the other:
+  - The **frontend** validates for *feedback*: inline, immediate, in the user's
+    language, so nobody discovers a bad field after a round trip. It is a
+    convenience and it is **never** a control.
+  - The **backend** validates because **the frontend can be bypassed**. Anyone
+    with `curl` skips every rule the browser enforces, so the server re-checks
+    everything from scratch — presence, type, length, range, format, allow-listed
+    enum values, ownership and authorization — and treats the client as hostile.
+    A rule that exists only in the browser does not exist.
+  - **Same rules, one source.** The two sides must not drift: share the schema
+    where the languages allow it, and where they do not (a Go API with a TS
+    frontend), generate the client's validation from the server's contract —
+    OpenAPI → types + schema. Two hand-written copies of a rule become two
+    different rules within a month.
+  - **Sanitize on the way in *and* encode on the way out.** Store what the user
+    typed, escape it for the context it lands in — HTML, an attribute, a URL, a
+    CSV cell, a log line, a filename. Sanitizing input alone does not stop XSS;
+    encoding at the point of output does. A CSV export is a real attack surface:
+    a cell starting `=`, `+`, `-` or `@` is a formula in Excel.
+  - **Reject, do not repair.** Silently "fixing" input hides an attack and
+    surprises the user. Say what was wrong and which field.
+  - **Normalize before you validate** — trim, Unicode-normalize, case-fold an
+    email — or the same value passes one check and fails another.
 - **Rate limiting** per identifier and per IP on login, OTP, lookup and any
   brute-forceable endpoint, with progressive lockout and a documented unlock path.
 - **File uploads** are type-checked by **magic bytes** (not extension), size- and
@@ -234,6 +420,21 @@ it is implemented **and to the test that proves it**. Non-negotiables:
 - **Search box on every list.** Every screen rendering a list or table has a
   debounced search box that filters that data. No exceptions — a list without
   search is incomplete.
+- **Every report and every data grid has an Export to CSV button**, and the
+  delimiter is a **pipe (`|`)**, not a comma. No exceptions: if a screen shows
+  a table, it exports. A report I can only read on screen is a report I have to
+  retype into a spreadsheet.
+  - Pipe because the data is Indonesian — addresses, dish names and notes have
+    commas in them constantly, and a comma-delimited file of that data opens
+    misaligned in Excel often enough to be useless.
+  - The export is still a real CSV, quoted per RFC 4180 with `|` as the
+    separator, not a hand-joined string. A value containing a pipe, a quote or
+    a newline must survive the round trip.
+  - Cells are still guarded against spreadsheet formula injection: anything
+    starting `=`, `+`, `-`, `@`, tab or CR is prefixed with an apostrophe. A
+    CSV is an executable document in Excel.
+  - The export honours the filters and the search on screen. Exporting
+    something other than what is displayed is worse than no export.
 - **Configurable values live in a `sys_parameters` table**, never hard-coded:
   company phone/email/address, tax rates, thresholds, feature toggles,
   operational timings. Every one ships with full CRUD (list + search, create,
@@ -259,7 +460,18 @@ it is implemented **and to the test that proves it**. Non-negotiables:
 - Development happens on a **shared dev server** (`claudedev`), not a laptop.
   Projects live at `/home/dev/projects/<project>`, per-project config at
   `/etc/<project>/<project>.env`, shared config at `/etc/claudedev/`.
-- **nginx reverse-proxies each project's local port**; only 80/443 are open.
+- **nginx reverse-proxies each project's local port**; only 80/443 are open by
+  default, so **every new port needs an explicit `ufw` rule.**
+- **Open that port to every network I actually arrive from, not just one.** My
+  machine does *not* reach the dev server from the physical LAN — it comes
+  through the VMware host adapter as **`172.16.0.1`**. A rule scoped only to
+  `192.168.88.0/24` looks correct and silently drops every packet: nginx is
+  listening, the service is healthy, and the tab just spins. This has now cost
+  time on two projects. When I say I cannot reach the site, check
+  `sudo grep -a 'DPT=<port>' /var/log/ufw.log` before touching anything else.
+- **Verify from another machine, never with `curl` on the server.** `curl` on
+  the box does not traverse the firewall, so it reports a healthy service while
+  every real user is blocked. Both times the rule above was missed, this is why.
 - **PostgreSQL runs natively** on the dev server and is shared across projects
   (one database per project, plus a `<project>_test` database for integration
   and concurrency tests). Don't stand up a second Postgres in Docker.
@@ -309,6 +521,10 @@ naming the docs it touched; `PROGRESS.md` is updated as work lands.
 ## 11. Things I don't want to see
 
 - `nano` in a runbook, or relative paths in an OS guide.
+- **Validation on one side only** — a rule enforced in the browser and trusted
+  by the server, or a server that validates while the form lets the user find
+  out after a round trip.
+- User input rendered without output encoding for the context it lands in.
 - Floating point anywhere near money.
 - Secrets in git, or a default admin password.
 - A list screen without a search box.
@@ -318,6 +534,8 @@ naming the docs it touched; `PROGRESS.md` is updated as work lands.
 - Silent scope changes — narrowing, widening or reinterpreting what I asked for.
 - Business logic in a handler, or a domain package importing a driver.
 - An ORM's automigrate treated as the schema's source of truth.
+- **A PWA** — a manifest, a service worker, an install prompt or an offline
+  shell, in any project. See §5.
 
 ---
 
@@ -443,3 +661,145 @@ Deliberately **not** installed, and why:
   (`uber-fx`, `uber-dig`, `google-wire`) that conflict with the pinned stack
   (section 5) and manual wiring in `cmd/api/main.go`. Install selectively or not
   at all.
+
+---
+
+## 15. The `impeccable` skill — install it in every project
+
+Save the block below as `.claude/skills/impeccable/SKILL.md` in each new repo,
+frontmatter included. It travels with this file on purpose: it is the standard
+of work, and the whole point is that it applies before there is a codebase to
+learn it from.
+
+Beside it, each project keeps its own **`design.md`** in the same folder:
+fonts, palette, and every colour pairing with its MEASURED contrast ratio, plus
+the handful of rules that are not taste. The skill is portable; a brand is not.
+Having the numbers one file away from the standard that demands them is what
+stops "checked the contrast" becoming a thing people say rather than do.
+
+Its rules are not generic advice. Every one was written after the matching bug
+reached a running site on a previous project, and the incident log at the end is
+the evidence. **Keep the log.** A rule with its incident attached gets followed;
+the same rule as a slogan does not. When a new class of silent failure bites,
+add the row and the rule — that is how this file earns its keep across projects.
+
+```markdown
+---
+name: impeccable
+description: The standard of work for this codebase. Use when writing, reviewing or finishing any change, and ALWAYS before reporting that something is done. Covers verifying before claiming, catching silent failures, measuring instead of eyeballing, and refusing to ship claims the system cannot back.
+---
+
+# Impeccable
+
+Impeccable is not "careful". It is a specific set of habits, each of which
+exists because its absence already shipped a bug here. The incidents are at the
+bottom; read them once, then work by the rules.
+
+## 1. Never claim what you have not verified
+
+- "Done" means **run**, not written. If a test did not run, say so.
+- If verification is impossible — no browser, no key, no data — **say which
+  claim is unverified and why**, in the same breath as delivering it. A quiet
+  "should work" is the failure.
+- Verify the claim you just wrote *in a comment or a migration description*.
+  Those are claims too, and they are believed for years.
+
+## 2. Assume every edit silently did nothing
+
+The most expensive bugs here were not wrong logic. They were operations that
+succeeded at doing nothing.
+
+- After a string replacement, **assert it changed something**. `str.replace`
+  with a stale anchor returns the original happily.
+- After a scan into a struct, **check a value came back**. A scan into a column
+  that does not exist does not error; it leaves the zero value.
+- After a lookup by key, **check the key existed**. A missing catalogue key
+  renders as the key.
+- Prefer a guard test over vigilance. If a class of silent failure is possible,
+  write the test that makes it loud, then fix the instance.
+- **A guard is only as good as its oracle.** Derive it from a source of truth —
+  the migrations, the AST, the schema — never from text that prose can wander
+  into. A check that reads comments will eventually be taught that the bug is
+  fine, by the comment warning about the bug.
+
+## 3. Measure — do not eyeball, and do not argue
+
+**The numbers for this project are in `design.md` beside this file** — fonts,
+palette, every measured contrast ratio, and the rules that are not taste. Read
+it before choosing a colour or a type size, rather than after a review.
+
+- **Contrast is calculated.** Every colour pairing that carries text gets a
+  measured ratio, recorded next to the token. `scripts/contrast.py`.
+- **Money is integers.** Whole rupiah in BIGINT, integer arithmetic, explicit
+  gorm column tags on any `…IDR` field.
+- When two people could disagree about whether something looks wrong, **produce
+  a number**: a wrap discontinuity as a ratio, an alpha step as a percentage, a
+  cascade resolved by parsing the stylesheet. A number ends the argument; an
+  opinion restarts it.
+
+## 4. Know which rule actually wins
+
+CSS bit this project three times. Specificity first, then source order.
+
+- A rule that wins on **position** is correct until someone reorders the file.
+  Win on **specificity**.
+- `.masthead a` matches links inside every panel in the masthead. Scope panel
+  rules with their container.
+- When unsure, resolve it mechanically rather than by reading.
+
+## 5. Cache like the filename tells the truth
+
+- `immutable` is a promise that the bytes at this URL never change. It is only
+  ever correct for a **content-hashed filename**.
+- Anything served under a stable name must revalidate, and its URL should carry
+  a version so a change arrives immediately.
+
+## 6. Do not ship a claim the system cannot back
+
+- An advertised promise ("free delivery") must be **switchable without a
+  deploy**, because the thing that makes it true is a parameter that will
+  change.
+- A regulated claim (halal, HACCP, ISO) needs the issuer's own file. Do not
+  redraw a certification mark, and do not download one of unknown provenance —
+  the wrong mark is worse than a plain one.
+- Alt text describes the image, not the page. A caption a person cannot see is
+  still a statement to somebody.
+
+## 7. Data, schema and configuration are different things
+
+- **Schema** goes in migrations, forward-only, numbered, with a `.down.sql`.
+- **Relative-dated sample data** goes in a re-runnable command, never a
+  migration — a migration with today's date in it is wrong tomorrow.
+- **Anything the business might change without a deploy** is a
+  `sys_parameters` row with full CRUD, not a constant.
+
+## 8. Before saying it is done
+
+1. `go vet ./...` and the full test suite — actually run, output read.
+2. The change exercised against the running service, not just compiled.
+3. Every new user-facing string in all three languages.
+4. Every new colour pairing measured.
+5. Docs updated **in the same commit** — a decision not in the docs did not
+   happen.
+6. The report states plainly: what was built, what was verified and how, what
+   is still blocked and on whom.
+
+---
+
+## Incident log
+
+Each rule above earned its place:
+
+| What shipped or nearly shipped | Cause |
+| --- | --- |
+| A public price list showing **Rp 0** against real 55.000 and 48.000 rows | gorm maps `UnitPriceIDR` to `unit_price_id_r`; a scan into a missing column zeroes silently |
+| `price.col_amount` rendered as literal text in a table header, in all three languages | a string replacement no-opped after gofmt realigned the map; nothing asserted it matched |
+| The home hero's subtitle would render as the literal string `home.lede` on any database without that content row | a template key with no catalogue entry; `T` echoes unknown keys |
+| Every CSS change for a week was invisible to anyone who had already visited | nginx marked stable-named `.css` `immutable` for 30 days — the browser never revalidated |
+| A phone would have shown the burger **and** the full nav row | two rules of equal specificity; the base one came later in the file |
+| The burger drawer rendered beige text on the beige sheet | `.masthead a` tied on specificity and sat later than `.nav-drawer a` |
+| Everything below the hero jumped when the photo loaded | intrinsic size hard-coded 800×800 against an 800×533 file |
+| "Clearing this hides the badge" — it did not | `Store.String` returns its default when a value is empty, not only when the row is missing |
+| A guard test for the Rp 0 bug silently stopped guarding it | its oracle read raw file text, so the COMMENT explaining the bug — "renders `UnitPriceIDR` as unit_price_id_r" — was parsed as a valid column name |
+
+```

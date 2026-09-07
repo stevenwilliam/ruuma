@@ -5,6 +5,21 @@ before touching code or docs. Where it conflicts with a habit, this file wins.
 Where it conflicts with `docs/02-business-rules.md` on *product* logic, that
 document wins — this file governs *how* we build, not *what* the product does.
 
+**Read `docs/99-steven-preference.md` alongside it, every session.** That file
+is Steven's portable engineering DNA — how he works, his stack, database,
+security and UI conventions — and it is identical in every one of his projects.
+This file is generated from its §3–§9 plus ruuma's own domain, locale and
+deliberate deviations.
+
+When the two disagree, **this file wins**: it is the newer, more specific
+decision. But a deviation must be *stated* here, not left implicit — an
+unexplained difference is indistinguishable from drift.
+
+> ruuma predates several sections of the current preference file. Where §99 now
+> carries a rule this project never adopted, treat it as **the standard to move
+> toward**, not as a claim about what ruuma already does. `docs/PROGRESS.md` is
+> the authority on what is actually built.
+
 ---
 
 ## 1. What ruuma is
